@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
+import styles from './page.module.css'
+import Image from 'next/image'
+import Link from 'next/link'
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
@@ -23,8 +26,21 @@ export default function RootLayout({
 	children: React.ReactNode
 }>) {
 	return (
-		<html lang="en">
-			<body className={`${geistSans.variable} ${geistMono.variable}`}>{children}</body>
+		<html lang="en" suppressHydrationWarning>
+			<body className={`${geistSans.variable} ${geistMono.variable}`}>
+				<Link href={'/'}>
+					<Image
+						className={styles.logo}
+						src="/next.svg"
+						alt="Next.js logo"
+						width={90}
+						height={38}
+						priority
+					/>
+				</Link>
+				{children}
+				<div>Footer Root</div>
+			</body>
 		</html>
 	)
 }
