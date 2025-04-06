@@ -1,9 +1,10 @@
+import AppHeader from '@/components/app.header'
+import 'bootstrap/dist/css/bootstrap.min.css'
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
+import { Container } from 'react-bootstrap'
 import './globals.css'
-import styles from './page.module.css'
-import Image from 'next/image'
-import Link from 'next/link'
+import Footer from '@/components/app.footer'
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
@@ -28,18 +29,9 @@ export default function RootLayout({
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<body className={`${geistSans.variable} ${geistMono.variable}`}>
-				<Link href={'/'}>
-					<Image
-						className={styles.logo}
-						src="/next.svg"
-						alt="Next.js logo"
-						width={90}
-						height={38}
-						priority
-					/>
-				</Link>
-				{children}
-				<div>Footer Root</div>
+				<AppHeader />
+				<Container style={{ marginTop: 100, flexGrow: 1 }}>{children}</Container>
+				<Footer />
 			</body>
 		</html>
 	)
