@@ -1,6 +1,11 @@
+import { Metadata } from 'next'
 import React from 'react'
 import { Container } from 'react-bootstrap'
 
+export const metadata: Metadata = {
+	title: 'Layout User',
+	description: 'OK OK',
+}
 export default function UserLayout({
 	children,
 }: Readonly<{
