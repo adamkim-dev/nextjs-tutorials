@@ -1,0 +1,692 @@
+{
+  "users": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "Alice",
+      "email": "alice@example.com",
+      "phoneNumber": "123456789",
+      "spentMoney": 50
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-406655440001",
+      "name": "Bob",
+      "email": "bob@example.com",
+      "phoneNumber": "987654321",
+      "spentMoney": 100
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-448655440001",
+      "name": "Bob2",
+      "email": "bob@example.com",
+      "phoneNumber": "987654321",
+      "spentMoney": 100
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655340001",
+      "name": "John",
+      "email": "bob@example.com",
+      "phoneNumber": "987654321",
+      "spentMoney": 100
+    },
+    {
+      "id": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+      "name": "adam",
+      "email": "duongdo.corsair@yopmail.com",
+      "phoneNumber": "5615852551",
+      "spentMoney": 0
+    },
+    {
+      "id": "4d047db2-5937-4631-ae61-da328e4088e1",
+      "name": "Bảo",
+      "email": "test",
+      "phoneNumber": "0971892037",
+      "spentMoney": 0
+    },
+    {
+      "id": "ec3f1514-c978-4ca6-a763-d96b751cdc6c",
+      "name": "Duong",
+      "email": "L2Q2",
+      "phoneNumber": "09",
+      "spentMoney": 0
+    },
+    {
+      "id": "6c1249d7-f5fa-4af5-8603-0200e66544bd",
+      "name": "Tài",
+      "email": "no need",
+      "phoneNumber": "0000",
+      "spentMoney": 0
+    }
+  ],
+  "activities": [
+    {
+      "id": "50b68fde-187a-4c45-9044-5e334465feef",
+      "tripId": "c4a72f4b-e19d-43f8-8364-ae3c36367542",
+      "name": "Lunch",
+      "time": "2025-09-04T10:32",
+      "totalMoney": 250,
+      "payerId": "550e8400-e29b-41d4-a716-446655440000",
+      "participants": [
+        {
+          "userId": "550e8400-e29b-41d4-a716-446655440000",
+          "isPaid": false,
+          "totalMoneyPerUser": 62.5
+        },
+        {
+          "userId": "550e8400-e29b-41d4-a716-406655440001",
+          "isPaid": false,
+          "totalMoneyPerUser": 62.5
+        },
+        {
+          "userId": "550e8400-e29b-41d4-a716-448655440001",
+          "isPaid": false,
+          "totalMoneyPerUser": 62.5
+        },
+        {
+          "userId": "550e8400-e29b-41d4-a716-446655340001",
+          "isPaid": false,
+          "totalMoneyPerUser": 62.5
+        }
+      ]
+    },
+    {
+      "id": "af97aff2-d869-4169-a7ae-7f8a8e7d658d",
+      "tripId": "c4a72f4b-e19d-43f8-8364-ae3c36367542",
+      "name": "ice scream",
+      "time": "2025-09-04T10:44",
+      "totalMoney": 100,
+      "payerId": "550e8400-e29b-41d4-a716-406655440001",
+      "participants": [
+        {
+          "userId": "550e8400-e29b-41d4-a716-446655440000",
+          "isPaid": false,
+          "totalMoneyPerUser": 25
+        },
+        {
+          "userId": "550e8400-e29b-41d4-a716-406655440001",
+          "isPaid": false,
+          "totalMoneyPerUser": 25
+        },
+        {
+          "userId": "550e8400-e29b-41d4-a716-448655440001",
+          "isPaid": false,
+          "totalMoneyPerUser": 25
+        },
+        {
+          "userId": "550e8400-e29b-41d4-a716-446655340001",
+          "isPaid": false,
+          "totalMoneyPerUser": 25
+        }
+      ]
+    },
+    {
+      "id": "1eeee191-e5f7-4656-9a31-aaaf7213a67d",
+      "tripId": "c4a72f4b-e19d-43f8-8364-ae3c36367542",
+      "name": "wc",
+      "time": "2025-09-04T10:51",
+      "totalMoney": 10,
+      "payerId": "550e8400-e29b-41d4-a716-446655440000",
+      "participants": [
+        {
+          "userId": "550e8400-e29b-41d4-a716-446655440000",
+          "isPaid": false,
+          "totalMoneyPerUser": 5
+        },
+        {
+          "userId": "550e8400-e29b-41d4-a716-406655440001",
+          "isPaid": false,
+          "totalMoneyPerUser": 5
+        }
+      ]
+    },
+    {
+      "id": "578cb70b-733c-427e-b2c8-2edfc3c3e40c",
+      "tripId": "c4a72f4b-e19d-43f8-8364-ae3c36367542",
+      "name": "uber",
+      "time": "2025-09-04T10:52",
+      "totalMoney": 150,
+      "payerId": "550e8400-e29b-41d4-a716-446655340001",
+      "participants": [
+        {
+          "userId": "550e8400-e29b-41d4-a716-406655440001",
+          "isPaid": false,
+          "totalMoneyPerUser": 37.5
+        },
+        {
+          "userId": "550e8400-e29b-41d4-a716-448655440001",
+          "isPaid": false,
+          "totalMoneyPerUser": 37.5
+        },
+        {
+          "userId": "550e8400-e29b-41d4-a716-446655340001",
+          "isPaid": false,
+          "totalMoneyPerUser": 37.5
+        },
+        {
+          "userId": "550e8400-e29b-41d4-a716-446655440000",
+          "isPaid": false,
+          "totalMoneyPerUser": 37.5
+        }
+      ]
+    },
+    {
+      "id": "9528e369-9f44-4e5b-af88-826a02e0533c",
+      "tripId": "c4a72f4b-e19d-43f8-8364-ae3c36367542",
+      "name": "ok",
+      "time": "2025-09-04T11:17",
+      "totalMoney": 1230,
+      "payerId": "550e8400-e29b-41d4-a716-406655440001",
+      "participants": [
+        {
+          "userId": "550e8400-e29b-41d4-a716-448655440001",
+          "isPaid": false,
+          "totalMoneyPerUser": 615
+        },
+        {
+          "userId": "550e8400-e29b-41d4-a716-446655340001",
+          "isPaid": false,
+          "totalMoneyPerUser": 615
+        }
+      ]
+    },
+    {
+      "id": "02fcbe04-9199-418a-af23-794e43c50297",
+      "tripId": "44a3b31f-5ab1-49e8-a881-83031dec9705",
+      "name": "Ice-scream",
+      "time": "2025-09-04T11:34",
+      "totalMoney": 150,
+      "payerId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+      "participants": [
+        {
+          "userId": "550e8400-e29b-41d4-a716-446655440000",
+          "isPaid": false,
+          "totalMoneyPerUser": 50
+        },
+        {
+          "userId": "550e8400-e29b-41d4-a716-406655440001",
+          "isPaid": false,
+          "totalMoneyPerUser": 50
+        },
+        {
+          "userId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+          "isPaid": false,
+          "totalMoneyPerUser": 50
+        }
+      ]
+    },
+    {
+      "id": "16fda4a9-d34e-4203-b815-a1ae7a14b9a2",
+      "tripId": "521feafa-2d49-4279-8c9f-f5e22d2e2c89",
+      "name": "The Gangs",
+      "time": "2025-09-04T14:02",
+      "totalMoney": 1980,
+      "payerId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+      "participants": [
+        {
+          "userId": "4d047db2-5937-4631-ae61-da328e4088e1",
+          "isPaid": false,
+          "totalMoneyPerUser": 495
+        },
+        {
+          "userId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+          "isPaid": false,
+          "totalMoneyPerUser": 495
+        },
+        {
+          "userId": "ec3f1514-c978-4ca6-a763-d96b751cdc6c",
+          "isPaid": false,
+          "totalMoneyPerUser": 495
+        },
+        {
+          "userId": "6c1249d7-f5fa-4af5-8603-0200e66544bd",
+          "isPaid": false,
+          "totalMoneyPerUser": 495
+        }
+      ]
+    },
+    {
+      "id": "35c28643-8735-4ba8-a610-9dfaad8d2aa3",
+      "tripId": "521feafa-2d49-4279-8c9f-f5e22d2e2c89",
+      "name": "Local Bar",
+      "time": "2025-09-04T14:05",
+      "totalMoney": 3293,
+      "payerId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+      "participants": [
+        {
+          "userId": "4d047db2-5937-4631-ae61-da328e4088e1",
+          "isPaid": false,
+          "totalMoneyPerUser": 823.25
+        },
+        {
+          "userId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+          "isPaid": false,
+          "totalMoneyPerUser": 823.25
+        },
+        {
+          "userId": "ec3f1514-c978-4ca6-a763-d96b751cdc6c",
+          "isPaid": false,
+          "totalMoneyPerUser": 823.25
+        },
+        {
+          "userId": "6c1249d7-f5fa-4af5-8603-0200e66544bd",
+          "isPaid": false,
+          "totalMoneyPerUser": 823.25
+        }
+      ]
+    },
+    {
+      "id": "518307fa-4b54-4eb6-b593-a12945a7fc96",
+      "tripId": "521feafa-2d49-4279-8c9f-f5e22d2e2c89",
+      "name": "cf vũng tàu",
+      "time": "2025-09-04T14:06",
+      "totalMoney": 200,
+      "payerId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+      "participants": [
+        {
+          "userId": "4d047db2-5937-4631-ae61-da328e4088e1",
+          "isPaid": false,
+          "totalMoneyPerUser": 50
+        },
+        {
+          "userId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+          "isPaid": false,
+          "totalMoneyPerUser": 50
+        },
+        {
+          "userId": "ec3f1514-c978-4ca6-a763-d96b751cdc6c",
+          "isPaid": false,
+          "totalMoneyPerUser": 50
+        },
+        {
+          "userId": "6c1249d7-f5fa-4af5-8603-0200e66544bd",
+          "isPaid": false,
+          "totalMoneyPerUser": 50
+        }
+      ]
+    },
+    {
+      "id": "27e402d5-0105-4e56-bf23-63cf710e5647",
+      "tripId": "521feafa-2d49-4279-8c9f-f5e22d2e2c89",
+      "name": "Ăn trưa bánh khọt ",
+      "time": "2025-09-04T14:06",
+      "totalMoney": 248,
+      "payerId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+      "participants": [
+        {
+          "userId": "4d047db2-5937-4631-ae61-da328e4088e1",
+          "isPaid": false,
+          "totalMoneyPerUser": 62
+        },
+        {
+          "userId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+          "isPaid": false,
+          "totalMoneyPerUser": 62
+        },
+        {
+          "userId": "ec3f1514-c978-4ca6-a763-d96b751cdc6c",
+          "isPaid": false,
+          "totalMoneyPerUser": 62
+        },
+        {
+          "userId": "6c1249d7-f5fa-4af5-8603-0200e66544bd",
+          "isPaid": false,
+          "totalMoneyPerUser": 62
+        }
+      ]
+    },
+    {
+      "id": "8e850597-fe78-44b7-a811-5773700a338f",
+      "tripId": "521feafa-2d49-4279-8c9f-f5e22d2e2c89",
+      "name": "Thuê Hotel",
+      "time": "2025-09-04T14:07",
+      "totalMoney": 500,
+      "payerId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+      "participants": [
+        {
+          "userId": "4d047db2-5937-4631-ae61-da328e4088e1",
+          "isPaid": false,
+          "totalMoneyPerUser": 125
+        },
+        {
+          "userId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+          "isPaid": false,
+          "totalMoneyPerUser": 125
+        },
+        {
+          "userId": "ec3f1514-c978-4ca6-a763-d96b751cdc6c",
+          "isPaid": false,
+          "totalMoneyPerUser": 125
+        },
+        {
+          "userId": "6c1249d7-f5fa-4af5-8603-0200e66544bd",
+          "isPaid": false,
+          "totalMoneyPerUser": 125
+        }
+      ]
+    },
+    {
+      "id": "d7776a33-087a-4f15-9b83-fc97e1693a43",
+      "tripId": "521feafa-2d49-4279-8c9f-f5e22d2e2c89",
+      "name": "ăn đêm Familimart",
+      "time": "2025-09-04T14:07",
+      "totalMoney": 150,
+      "payerId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+      "participants": [
+        {
+          "userId": "4d047db2-5937-4631-ae61-da328e4088e1",
+          "isPaid": false,
+          "totalMoneyPerUser": 37.5
+        },
+        {
+          "userId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+          "isPaid": false,
+          "totalMoneyPerUser": 37.5
+        },
+        {
+          "userId": "ec3f1514-c978-4ca6-a763-d96b751cdc6c",
+          "isPaid": false,
+          "totalMoneyPerUser": 37.5
+        },
+        {
+          "userId": "6c1249d7-f5fa-4af5-8603-0200e66544bd",
+          "isPaid": false,
+          "totalMoneyPerUser": 37.5
+        }
+      ]
+    },
+    {
+      "id": "f5e2ef7c-0dab-438b-97a7-0c5f2bf71365",
+      "tripId": "521feafa-2d49-4279-8c9f-f5e22d2e2c89",
+      "name": "Bar Vũng Tàu ",
+      "time": "2025-09-04T14:07",
+      "totalMoney": 4500,
+      "payerId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+      "participants": [
+        {
+          "userId": "4d047db2-5937-4631-ae61-da328e4088e1",
+          "isPaid": false,
+          "totalMoneyPerUser": 1125
+        },
+        {
+          "userId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+          "isPaid": false,
+          "totalMoneyPerUser": 1125
+        },
+        {
+          "userId": "ec3f1514-c978-4ca6-a763-d96b751cdc6c",
+          "isPaid": false,
+          "totalMoneyPerUser": 1125
+        },
+        {
+          "userId": "6c1249d7-f5fa-4af5-8603-0200e66544bd",
+          "isPaid": false,
+          "totalMoneyPerUser": 1125
+        }
+      ]
+    },
+    {
+      "id": "f33c1ebc-4933-4419-82ee-5d88802f0c0b",
+      "tripId": "521feafa-2d49-4279-8c9f-f5e22d2e2c89",
+      "name": "Đi Phà Vũng Tàu ",
+      "time": "2025-09-04T14:08",
+      "totalMoney": 380,
+      "payerId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+      "participants": [
+        {
+          "userId": "4d047db2-5937-4631-ae61-da328e4088e1",
+          "isPaid": false,
+          "totalMoneyPerUser": 95
+        },
+        {
+          "userId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+          "isPaid": false,
+          "totalMoneyPerUser": 95
+        },
+        {
+          "userId": "ec3f1514-c978-4ca6-a763-d96b751cdc6c",
+          "isPaid": false,
+          "totalMoneyPerUser": 95
+        },
+        {
+          "userId": "6c1249d7-f5fa-4af5-8603-0200e66544bd",
+          "isPaid": false,
+          "totalMoneyPerUser": 95
+        }
+      ]
+    },
+    {
+      "id": "2f3e326f-e30c-446c-81de-7af0b8b3379f",
+      "tripId": "521feafa-2d49-4279-8c9f-f5e22d2e2c89",
+      "name": "Uống nước",
+      "time": "2025-09-04T14:08",
+      "totalMoney": 100,
+      "payerId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+      "participants": [
+        {
+          "userId": "4d047db2-5937-4631-ae61-da328e4088e1",
+          "isPaid": false,
+          "totalMoneyPerUser": 25
+        },
+        {
+          "userId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+          "isPaid": false,
+          "totalMoneyPerUser": 25
+        },
+        {
+          "userId": "ec3f1514-c978-4ca6-a763-d96b751cdc6c",
+          "isPaid": false,
+          "totalMoneyPerUser": 25
+        },
+        {
+          "userId": "6c1249d7-f5fa-4af5-8603-0200e66544bd",
+          "isPaid": false,
+          "totalMoneyPerUser": 25
+        }
+      ]
+    },
+    {
+      "id": "07741b5f-52c8-4436-9b63-002233d9485a",
+      "tripId": "521feafa-2d49-4279-8c9f-f5e22d2e2c89",
+      "name": "ăn trưa ",
+      "time": "2025-09-04T14:10",
+      "totalMoney": 285,
+      "payerId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+      "participants": [
+        {
+          "userId": "4d047db2-5937-4631-ae61-da328e4088e1",
+          "isPaid": false,
+          "totalMoneyPerUser": 95
+        },
+        {
+          "userId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+          "isPaid": false,
+          "totalMoneyPerUser": 95
+        },
+        {
+          "userId": "ec3f1514-c978-4ca6-a763-d96b751cdc6c",
+          "isPaid": false,
+          "totalMoneyPerUser": 95
+        }
+      ]
+    },
+    {
+      "id": "a269645f-31ba-4608-b640-7807eb04223c",
+      "tripId": "521feafa-2d49-4279-8c9f-f5e22d2e2c89",
+      "name": "Thảo cầm viên + Cf sông SG ",
+      "time": "2025-09-04T14:11",
+      "totalMoney": 600,
+      "payerId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+      "participants": [
+        {
+          "userId": "4d047db2-5937-4631-ae61-da328e4088e1",
+          "isPaid": false,
+          "totalMoneyPerUser": 200
+        },
+        {
+          "userId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+          "isPaid": false,
+          "totalMoneyPerUser": 200
+        },
+        {
+          "userId": "ec3f1514-c978-4ca6-a763-d96b751cdc6c",
+          "isPaid": false,
+          "totalMoneyPerUser": 200
+        }
+      ]
+    }
+  ],
+  "trips": [
+    {
+      "status": "on-going",
+      "id": "c4a72f4b-e19d-43f8-8364-ae3c36367542",
+      "name": "Trip to Beach",
+      "date": "2025-09-04",
+      "participants": [
+        {
+          "userId": "550e8400-e29b-41d4-a716-446655440000",
+          "isPaid": false,
+          "totalMoneyPerUser": 92.5,
+          "paidAmount": -130
+        },
+        {
+          "userId": "550e8400-e29b-41d4-a716-406655440001",
+          "isPaid": false,
+          "totalMoneyPerUser": 142.5,
+          "paidAmount": 42
+        },
+        {
+          "userId": "550e8400-e29b-41d4-a716-448655440001",
+          "isPaid": true,
+          "totalMoneyPerUser": 137.5,
+          "paidAmount": 430
+        },
+        {
+          "userId": "550e8400-e29b-41d4-a716-446655340001",
+          "isPaid": false,
+          "totalMoneyPerUser": 137.5,
+          "paidAmount": 0
+        }
+      ],
+      "payers": [
+        {
+          "userId": "550e8400-e29b-41d4-a716-446655440000",
+          "spentMoney": 260
+        },
+        {
+          "userId": "550e8400-e29b-41d4-a716-406655440001",
+          "spentMoney": 1330
+        },
+        {
+          "userId": "550e8400-e29b-41d4-a716-446655340001",
+          "spentMoney": 150
+        }
+      ],
+      "totalMoney": 1740,
+      "moneyPerUser": 127.5,
+      "activities": [
+        "50b68fde-187a-4c45-9044-5e334465feef",
+        "af97aff2-d869-4169-a7ae-7f8a8e7d658d",
+        "1eeee191-e5f7-4656-9a31-aaaf7213a67d",
+        "578cb70b-733c-427e-b2c8-2edfc3c3e40c",
+        "9528e369-9f44-4e5b-af88-826a02e0533c"
+      ],
+      "paymentHistory": [
+        "f33ed8a7-ef26-4c3e-80c1-6a086449013a",
+        "be98cb8c-0963-4cea-b11f-6e1564dc1c10",
+        "ea296118-5b26-4d4f-ba68-04a3b8c80ea5",
+        "21768ed7-c2e7-4633-99e5-858b0a70da03",
+        "92a62aa9-668e-42fc-bbf1-f78e78d7a696"
+      ]
+    },
+    {
+      "id": "521feafa-2d49-4279-8c9f-f5e22d2e2c89",
+      "name": "Dương travelled to SG",
+      "date": "2025-08-29",
+      "participants": [
+        {
+          "userId": "4d047db2-5937-4631-ae61-da328e4088e1",
+          "isPaid": false,
+          "totalMoneyPerUser": 0
+        },
+        {
+          "userId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+          "isPaid": false,
+          "totalMoneyPerUser": 0
+        },
+        {
+          "userId": "ec3f1514-c978-4ca6-a763-d96b751cdc6c",
+          "isPaid": false,
+          "totalMoneyPerUser": 0
+        },
+        {
+          "userId": "6c1249d7-f5fa-4af5-8603-0200e66544bd",
+          "isPaid": false,
+          "totalMoneyPerUser": 0
+        }
+      ],
+      "payers": [
+        {
+          "userId": "b11bbff5-410b-4e9b-ad16-70e41a92d514",
+          "spentMoney": 12236
+        }
+      ],
+      "status": "ended",
+      "totalMoney": 12236,
+      "moneyPerUser": 0,
+      "activities": [
+        "16fda4a9-d34e-4203-b815-a1ae7a14b9a2",
+        "35c28643-8735-4ba8-a610-9dfaad8d2aa3",
+        "518307fa-4b54-4eb6-b593-a12945a7fc96",
+        "27e402d5-0105-4e56-bf23-63cf710e5647",
+        "8e850597-fe78-44b7-a811-5773700a338f",
+        "d7776a33-087a-4f15-9b83-fc97e1693a43",
+        "f5e2ef7c-0dab-438b-97a7-0c5f2bf71365",
+        "f33c1ebc-4933-4419-82ee-5d88802f0c0b",
+        "2f3e326f-e30c-446c-81de-7af0b8b3379f",
+        "07741b5f-52c8-4436-9b63-002233d9485a",
+        "a269645f-31ba-4608-b640-7807eb04223c"
+      ]
+    }
+  ],
+  "paymentHistory": [
+    {
+      "id": "f33ed8a7-ef26-4c3e-80c1-6a086449013a",
+      "tripId": "c4a72f4b-e19d-43f8-8364-ae3c36367542",
+      "userId": "550e8400-e29b-41d4-a716-406655440001",
+      "amount": 20,
+      "paymentDate": "2025-09-04T10:46",
+      "note": "ok"
+    },
+    {
+      "id": "be98cb8c-0963-4cea-b11f-6e1564dc1c10",
+      "tripId": "c4a72f4b-e19d-43f8-8364-ae3c36367542",
+      "userId": "550e8400-e29b-41d4-a716-406655440001",
+      "amount": 22,
+      "paymentDate": "2025-09-04T11:02",
+      "note": "ck"
+    },
+    {
+      "id": "ea296118-5b26-4d4f-ba68-04a3b8c80ea5",
+      "tripId": "c4a72f4b-e19d-43f8-8364-ae3c36367542",
+      "userId": "550e8400-e29b-41d4-a716-448655440001",
+      "amount": 130,
+      "paymentDate": "2025-09-04T11:06",
+      "note": "banking"
+    },
+    {
+      "id": "21768ed7-c2e7-4633-99e5-858b0a70da03",
+      "tripId": "c4a72f4b-e19d-43f8-8364-ae3c36367542",
+      "userId": "550e8400-e29b-41d4-a716-446655440000",
+      "amount": -130,
+      "paymentDate": "2025-09-04T11:15",
+      "note": "Refund: banking"
+    },
+    {
+      "id": "92a62aa9-668e-42fc-bbf1-f78e78d7a696",
+      "tripId": "c4a72f4b-e19d-43f8-8364-ae3c36367542",
+      "userId": "550e8400-e29b-41d4-a716-448655440001",
+      "amount": 300,
+      "paymentDate": "2025-09-04T11:18",
+      "note": "cash"
+    }
+  ]
+}
