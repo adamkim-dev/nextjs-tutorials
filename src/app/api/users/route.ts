@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
-const API_URL = "http://localhost:3001";
+const API_URL = process.env.API_URL || "http://localhost:3001";
 
 export async function GET() {
   const response = await fetch(`${API_URL}/users`);
