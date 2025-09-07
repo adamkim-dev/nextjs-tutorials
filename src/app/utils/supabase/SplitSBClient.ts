@@ -2,6 +2,15 @@
 import ENV from "@/configs/env";
 import { SupabaseClient } from "@supabase/supabase-js";
 
+// Kiểm tra các giá trị trước khi khởi tạo
+if (!ENV.SUPABASE_URL) {
+  throw new Error("supabaseUrl is required.");
+}
+
+if (!ENV.SUPABASE_KEY) {
+  throw new Error("supabaseKey is required.");
+}
+
 const supabaseClient = new SupabaseClient(ENV.SUPABASE_URL, ENV.SUPABASE_KEY);
 
 export class SplitSBClient {
