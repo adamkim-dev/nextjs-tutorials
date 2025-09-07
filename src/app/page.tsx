@@ -1,63 +1,58 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Trip } from "./models";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import useTrips from "./hooks/useTrips";
 
 export default function Home() {
-  const [trips, setTrips] = useState<Trip[]>([]);
-  
+  const [loading, setLoading] = useState(true);
+
+  const { data: trips, isLoading, isError, error } = useTrips();
+
   useEffect(() => {
-    fetch("/api/trips")
-      .then((res) => res.json())
-      .then(setTrips);
-  }, []);
+    if (!isLoading) {
+      setLoading(false);
+    }
+  }, [isLoading]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (isError) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
-    <div className="font-sans min-h-screen p-4 sm:p-8 bg-gray-50 text-foreground">
-      <header className="py-4 text-center text-xl font-bold bg-white rounded-lg shadow p-4 mb-6">
-        <span className="text-2xl">My Trips</span>
-      </header>
-      
-      <main className="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 className="text-xl font-bold mb-4 border-b pb-2">All Trips</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          {trips.map((trip: Trip) => (
-            <div
-              key={trip.id}
-              className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow transition flex flex-col gap-2"
-            >
-              <div className="font-semibold text-lg border-b pb-2">{trip.name}</div>
-              <div className="text-sm text-gray-500">Date</div>
-              <div className="font-medium">
-                {trip.date ? new Date(trip.date).toLocaleDateString('en-GB', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric'
-                }) : "Not specified"}
-              </div>
-              <div className="text-sm text-gray-500 mt-2">Total Money</div>
-              <div className="font-medium">${trip.totalMoney}</div>
+    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
+        <h1 className="text-4xl font-bold mb-8">Your Trips</h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {trips.map((trip) => (
+            <div key={trip.id} className="border p-4 rounded-lg">
+              <h2 className="text-xl font-semibold">{trip.name}</h2>
+              <p>Date: {trip.date}</p>
+              <p>Total: ${trip.totalMoney}</p>
               <Link
                 href={`/trip/${trip.id}`}
-                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded text-center hover:bg-blue-600 transition flex items-center justify-center gap-2"
+                className="text-blue-500 hover:underline"
               >
-                <span>🔍</span> View Details
+                View Details
               </Link>
             </div>
           ))}
         </div>
-        
-        <div className="flex justify-center">
-          <Link 
+
+        <div className="mt-8">
+          <Link
             href="/create-trip"
-            className="px-6 py-3 bg-green-500 text-white rounded text-center hover:bg-green-600 transition flex items-center justify-center gap-2 shadow-sm"
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           >
-            <span>✨</span> Create New Trip
+            Create New Trip
           </Link>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }

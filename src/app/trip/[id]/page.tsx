@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Activity, Trip, User, TripStatus } from "@/app/models";
 import Link from "next/link";
+import useQueryAllTrips from "@/app/hooks/queries/useQueryTrips";
 
 export default function TripDetail() {
   const { id } = useParams();
@@ -20,18 +21,10 @@ export default function TripDetail() {
   const [paymentNote, setPaymentNote] = useState("");
   const [showWarning, setShowWarning] = useState(false);
 
+  const response = useQueryAllTrips();
+
   useEffect(() => {
     // Fetch trip data
-    fetch(`/api/trips/${id}`)
-      .then((res) => {
-        console.log("🚀 ~ TripDetail ~ res:", res);
-        return res.json();
-      })
-      .then((data) => {
-        console.log(data);
-        setTrip(data);
-      });
-
     // Fetch activities data
     fetch(`/api/activities`)
       .then((res) => res.json())

@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { SupabaseProvider } from "./components/providers/SupabaseProvider";
+import Header from "./components/Header";
+import QueryProvider from "./components/providers/QueryProvider";
+import ReduxProvider from "./components/providers/ReduxProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,8 +30,18 @@ export default function RootLayout({
     <html lang="en" className="mdl-js" suppressHydrationWarning={true}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning={true}
       >
-        {children}
+        <ReduxProvider>
+          <QueryProvider>
+            <SupabaseProvider>
+              <Header />
+              <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                {children}
+              </main>
+            </SupabaseProvider>
+          </QueryProvider>
+        </ReduxProvider>
       </body>
     </html>
   );
