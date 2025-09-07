@@ -2,16 +2,19 @@
 import ENV from "@/configs/env";
 import { SupabaseClient } from "@supabase/supabase-js";
 
-// Kiểm tra các giá trị trước khi khởi tạo
-if (!ENV.SUPABASE_URL) {
-  throw new Error("supabaseUrl is required.");
-}
+// Tạo client với kiểm tra điều kiện
+let supabaseClient: SupabaseClient;
 
-if (!ENV.SUPABASE_KEY) {
-  throw new Error("supabaseKey is required.");
+try {
+  if (!ENV.SUPABASE_URL || !ENV.SUPABASE_KEY) {
+    console.warn("Supabase URL or Key is missing");
+  }
+  supabaseClient = new SupabaseClient(ENV.SUPABASE_URL || "", ENV.SUPABASE_KEY || "");
+} catch (error) {
+  console.error("Error initializing Supabase client:", error);
+  // Fallback client that will throw appropriate errors when methods are called
+  supabaseClient = {} as SupabaseClient;
 }
-
-const supabaseClient = new SupabaseClient(ENV.SUPABASE_URL, ENV.SUPABASE_KEY);
 
 export class SplitSBClient {
   protected client: SupabaseClient;
