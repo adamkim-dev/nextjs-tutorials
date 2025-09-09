@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useSupabase } from "../providers/SupabaseProvider";
-import { useRouter } from "next/navigation";
 
 export default function OTPLoginForm() {
   const [email, setEmail] = useState("");
@@ -20,10 +19,9 @@ export default function OTPLoginForm() {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          // Có thể thêm các tùy chọn nếu cần
           emailRedirectTo: `${window.location.origin}/auth/callback`,
-          data: {}, // Thêm data object trống như trong cURL request
-          shouldCreateUser: true, // Tương đương với create_user:true trong request
+          // Không cần thiết lập shouldCreateUser vì mặc định là true
+          // Không cần thiết lập data nếu không có dữ liệu cần lưu
         },
       });
 

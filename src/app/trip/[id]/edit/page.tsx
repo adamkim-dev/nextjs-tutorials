@@ -4,6 +4,8 @@ import { Trip, TripParticipant, User } from "@/app/models";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
+import tripService from "@/app/services/tripService";
+import userService from "@/app/services/userService";
 
 export default function EditTrip() {
   const { id } = useParams();
@@ -17,22 +19,27 @@ export default function EditTrip() {
 
   // Fetch trip and users when component mounts
   useEffect(() => {
-    // Fetch trip details
-    fetch(`/api/trips/${id}`)
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchData = async () => {
+      // Fetch trip details using tripService
+      const tripResponse = await tripService.fetchTripById(id as string);
+      if (tripResponse.data) {
+        const data = tripResponse.data;
         setTrip(data);
         setTripName(data.name);
         setTripDate(data.date);
         setSelectedUsers(
           data.participants.map((p: TripParticipant) => p.userId)
         );
-      });
+      }
 
-    // Fetch all users
-    fetch("/api/users")
-      .then((res) => res.json())
-      .then(setUsers);
+      // Fetch all users using userService
+      const usersResponse = await userService.fetchAllUsers();
+      if (usersResponse.data) {
+        setUsers(usersResponse.data);
+      }
+    };
+
+    fetchData();
   }, [id]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -70,14 +77,19 @@ export default function EditTrip() {
         participants: updatedParticipants,
       };
 
-      // Gửi yêu cầu PUT để cập nhật trip
-      const response = await fetch(`/api/trips/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedTrip),
+      // Use tripService to update trip
+      const response = await tripService.updateTrip(id as string, {
+        name: updatedTrip.name,
+        date: updatedTrip.date,
+        participants: updatedTrip.participants.map((p) => ({
+          userId: p.userId,
+          isPaid: p.isPaid,
+          totalMoneyPerUser: p.totalMoneyPerUser,
+          paidAmount: 0, // Adding required paidAmount field
+        })),
       });
 
-      if (response.ok) {
+      if (response.data) {
         router.push(`/trip/${id}`);
       } else {
         throw new Error("Failed to update trip");

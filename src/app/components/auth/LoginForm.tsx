@@ -3,7 +3,6 @@
 
 import { useState } from "react";
 import { useSupabase } from "../providers/SupabaseProvider";
-import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -11,7 +10,6 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const { supabase } = useSupabase();
-  const router = useRouter();
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,16 +21,15 @@ export default function LoginForm() {
         email,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
-          data: {}, // Thêm data object trống như trong cURL request
-          shouldCreateUser: true, // Tương đương với create_user:true trong request
+          data: {},
+          shouldCreateUser: true,
         },
       });
 
       if (error) throw error;
-      
+
       // Nếu không có lỗi, đánh dấu là đã gửi OTP
       setOtpSent(true);
-      
     } catch (error: any) {
       setError(error.message || "Đã xảy ra lỗi khi gửi OTP");
     } finally {
@@ -52,8 +49,9 @@ export default function LoginForm() {
       {otpSent ? (
         <div className="text-center">
           <p className="mb-4">
-            Chúng tôi đã gửi một email chứa mã OTP đến {email}. Vui lòng kiểm tra
-            hộp thư đến của bạn và nhấp vào liên kết trong email để đăng nhập.
+            Chúng tôi đã gửi một email chứa mã OTP đến {email}. Vui lòng kiểm
+            tra hộp thư đến của bạn và nhấp vào liên kết trong email để đăng
+            nhập.
           </p>
           <button
             onClick={() => setOtpSent(false)}

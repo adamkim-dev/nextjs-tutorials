@@ -8,7 +8,6 @@ export interface User {
 
 export interface ActivityParticipant {
   userId: string;
-  isPaid: boolean;
   totalMoneyPerUser: number;
 }
 

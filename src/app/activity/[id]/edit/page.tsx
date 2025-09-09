@@ -4,6 +4,8 @@ import { useState, useEffect, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { User, Activity, ActivityParticipant } from "@/app/models";
 import Link from "next/link";
+import activityService from "@/app/services/activityService";
+import userService from "@/app/services/userService";
 
 export default function EditActivity() {
   const { id } = useParams();
@@ -22,10 +24,13 @@ export default function EditActivity() {
 
   // Fetch activity, trip and users when component mounts
   useEffect(() => {
-    // Fetch activity details
-    fetch(`/api/activities/${id}`)
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchData = async () => {
+      // Fetch activity details using activityService
+      const activityResponse = await activityService.fetchActivityById(
+        id as string
+      );
+      if (activityResponse.data) {
+        const data = activityResponse.data;
         setActivity(data);
         setActivityName(data.name);
         setActivityTime(data.time);
@@ -36,11 +41,15 @@ export default function EditActivity() {
           data.participants.map((p: ActivityParticipant) => p.userId)
         );
 
-        // Fetch all users
-        fetch("/api/users")
-          .then((res) => res.json())
-          .then(setUsers);
-      });
+        // Fetch all users using userService
+        const usersResponse = await userService.fetchAllUsers();
+        if (usersResponse.data) {
+          setUsers(usersResponse.data);
+        }
+      }
+    };
+
+    fetchData();
   }, [id]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -70,14 +79,12 @@ export default function EditActivity() {
         // If new participant
         return {
           userId,
-          isPaid: false,
           totalMoneyPerUser: moneyPerUser,
         };
       });
 
       // Create updated activity object
       const updatedActivity = {
-        ...activity,
         name: activityName,
         time: activityTime,
         totalMoney: parseFloat(totalMoney),
@@ -85,14 +92,13 @@ export default function EditActivity() {
         participants: updatedParticipants,
       };
 
-      // Send PUT request to update activity
-      const response = await fetch(`/api/activities/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedActivity),
-      });
+      // Use activityService to update activity
+      const response = await activityService.updateActivity(
+        id as string,
+        updatedActivity
+      );
 
-      if (response.ok) {
+      if (response.data) {
         router.push(`/trip/${activity.tripId}`);
       } else {
         throw new Error("Failed to update activity");
@@ -118,7 +124,10 @@ export default function EditActivity() {
   return (
     <div className="font-sans min-h-screen p-4 sm:p-8 bg-gray-50 text-foreground">
       <header className="py-4 text-center text-xl font-bold flex items-center justify-between bg-white rounded-lg shadow p-4 mb-6">
-        <Link href={`/trip/${tripId}`} className="text-blue-500 hover:text-blue-700 transition">
+        <Link
+          href={`/trip/${tripId}`}
+          className="text-blue-500 hover:text-blue-700 transition"
+        >
           <span>⬅️</span> Back
         </Link>
         <span className="text-2xl">Edit Activity: {activity.name}</span>
@@ -126,12 +135,16 @@ export default function EditActivity() {
       </header>
 
       <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 className="text-xl font-bold mb-4 border-b pb-2">Activity Information</h2>
-        
+        <h2 className="text-xl font-bold mb-4 border-b pb-2">
+          Activity Information
+        </h2>
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-700">Activity Name</label>
+              <label className="block text-sm font-medium mb-2 text-gray-700">
+                Activity Name
+              </label>
               <input
                 type="text"
                 value={activityName}
@@ -143,7 +156,9 @@ export default function EditActivity() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-700">Date & Time</label>
+              <label className="block text-sm font-medium mb-2 text-gray-700">
+                Date & Time
+              </label>
               <input
                 type="datetime-local"
                 value={activityTime}
@@ -156,7 +171,9 @@ export default function EditActivity() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-700">Total Money</label>
+              <label className="block text-sm font-medium mb-2 text-gray-700">
+                Total Money
+              </label>
               <input
                 type="number"
                 value={totalMoney}
@@ -170,7 +187,9 @@ export default function EditActivity() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-700">Payer</label>
+              <label className="block text-sm font-medium mb-2 text-gray-700">
+                Payer
+              </label>
               <select
                 value={payerId}
                 onChange={(e) => setPayerId(e.target.value)}
@@ -210,13 +229,20 @@ export default function EditActivity() {
                         <div className="h-8 w-8 rounded-full bg-blue-500 text-white flex items-center justify-center mr-2">
                           {user.name.charAt(0).toUpperCase()}
                         </div>
-                        <label htmlFor={`participant-${user.id}`} className="cursor-pointer">{user.name}</label>
+                        <label
+                          htmlFor={`participant-${user.id}`}
+                          className="cursor-pointer"
+                        >
+                          {user.name}
+                        </label>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 p-4 text-center">Loading users...</p>
+                <p className="text-gray-500 p-4 text-center">
+                  Loading users...
+                </p>
               )}
             </div>
             {selectedParticipants.length === 0 && (

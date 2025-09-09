@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Activity, User } from "@/app/models";
+import activityService from "@/app/services/activityService";
+import userService from "@/app/services/userService";
 
 export default function ActivityDetail() {
   const { id } = useParams();
@@ -12,13 +14,21 @@ export default function ActivityDetail() {
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    fetch(`/api/activities/${id}`)
-      .then((res) => res.json())
-      .then(setActivity);
+    const fetchData = async () => {
+      // Fetch activity details using activityService
+      const activityResponse = await activityService.fetchActivityById(id as string);
+      if (activityResponse.data) {
+        setActivity(activityResponse.data);
+      }
 
-    fetch(`/api/users`)
-      .then((res) => res.json())
-      .then((data) => setUsers(data));
+      // Fetch users using userService
+      const usersResponse = await userService.fetchAllUsers();
+      if (usersResponse.data) {
+        setUsers(usersResponse.data);
+      }
+    };
+
+    fetchData();
   }, [id]);
 
   if (!activity) return <div>Loading...</div>;
@@ -35,11 +45,10 @@ export default function ActivityDetail() {
 
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/activities/${id}`, {
-        method: "DELETE",
-      });
+      // Use activityService to delete activity
+      const response = await activityService.deleteActivity(id as string);
 
-      if (response.ok) {
+      if (!response.error) {
         router.push(`/trip/${activity.tripId}`);
       } else {
         throw new Error("Failed to delete activity");

@@ -4,6 +4,9 @@ import { useState, useEffect, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { User, Trip, TripParticipant } from "@/app/models";
 import Link from "next/link";
+import tripService from "@/app/services/tripService";
+import userService from "@/app/services/userService";
+import activityService from "@/app/services/activityService";
 
 export default function CreateActivity() {
   const { id: tripId } = useParams();
@@ -25,10 +28,10 @@ export default function CreateActivity() {
   // Fetch trip and users when component mounts
   useEffect(() => {
     // Fetch trip details
-    fetch(`/api/trips/${tripId}`)
-      .then((res) => res.json())
-      .then((tripData) => {
-        console.log("🚀 ~ CreateActivity ~ tripData:", tripData);
+    const fetchTripData = async () => {
+      const tripResponse = await tripService.fetchTripById(tripId as string);
+      if (tripResponse.data) {
+        const tripData = tripResponse.data;
         setTrip(tripData);
 
         // Kiểm tra trạng thái trip
@@ -44,23 +47,20 @@ export default function CreateActivity() {
         );
 
         // Fetch tất cả người dùng
-        fetch("/api/users")
-          .then((res) => res.json())
-          .then((allUsers: User[]) => {
-            setUsers(allUsers);
-
-            // Lọc ra những người dùng trong trip
-            const usersInTrip = allUsers.filter((user) =>
-              tripUserIds.includes(user.id)
-            );
-
-            setTripUsers(usersInTrip);
-
-            // Mặc định chọn tất cả người dùng trong trip
-            setSelectedParticipants(tripUserIds);
-          });
-      });
-  }, [tripId]);
+        const usersResponse = await userService.fetchAllUsers();
+        if (usersResponse.data) {
+          setUsers(usersResponse.data);
+          // Lọc người dùng trong trip
+          setTripUsers(
+            usersResponse.data.filter((user) => tripUserIds.includes(user.id))
+          );
+          // Mặc định chọn tất cả người dùng trong trip
+          setSelectedParticipants(tripUserIds);
+        }
+      }
+    };
+    fetchTripData();
+  }, [tripId, router]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -72,7 +72,6 @@ export default function CreateActivity() {
       // Create participants array from selected users
       const participants = selectedParticipants.map((userId) => ({
         userId,
-        isPaid: false,
         totalMoneyPerUser: moneyPerUser,
       }));
 
@@ -84,18 +83,15 @@ export default function CreateActivity() {
         totalMoney: parseFloat(totalMoney),
         payerId,
         participants,
-      };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
 
-      // Send POST request to create activity
-      const response = await fetch("/api/activities", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newActivity),
-      });
+      // Sử dụng activityService để tạo activity mới
+      const response = await activityService.createActivity(newActivity);
 
       // Trong hàm handleSubmit, sau khi tạo activity thành công
-      if (response.ok) {
-        const createdActivity = await response.json();
+      if (response.data) {
+        const createdActivity = response.data;
 
         // Update trip's activities list and payers
         if (trip) {
@@ -125,12 +121,7 @@ export default function CreateActivity() {
             activities: [...(trip.activities || []), createdActivity.id],
           };
 
-          // Gửi PUT request để cập nhật trip
-          await fetch(`/api/trips/${tripId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updatedTrip),
-          });
+          await tripService.updateTrip(tripId as string, updatedTrip);
         }
 
         router.push(`/trip/${tripId}`);
@@ -163,7 +154,7 @@ export default function CreateActivity() {
           <i className="fas fa-arrow-left"></i> Back
         </Link>
         <span className="text-2xl">Create New Activity</span>
-        <div className="w-8"></div> {/* Spacer for balance */}
+        <div className="w-8"></div>
       </header>
 
       <div className="bg-white rounded-lg shadow p-6 mb-6">

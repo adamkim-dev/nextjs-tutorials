@@ -1,9 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { User, TripStatus } from "@/app/models";
 import Link from "next/link";
+import tripService from "../services/tripService";
+import userService from "../services/userService";
 
 export default function CreateTrip() {
   const router = useRouter();
@@ -25,10 +28,11 @@ export default function CreateTrip() {
     fetchUsers();
   }, []);
 
-  const fetchUsers = () => {
-    fetch("/api/users")
-      .then((res) => res.json())
-      .then(setUsers);
+  const fetchUsers = async () => {
+    const response = await userService.fetchAllUsers();
+    if (response.data) {
+      setUsers(response.data);
+    }
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -48,23 +52,16 @@ export default function CreateTrip() {
         name: tripName,
         date: tripDate,
         participants,
-        payers: [],
         status: "planed" as TripStatus,
-        totalMoney: 0,
-        moneyPerUser: 0,
-        activities: [],
-      };
+        total_money: 0,
+        money_per_user: 0,
+      } as any;
 
-      // Send POST request to create trip
-      const response = await fetch("/api/trips", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newTrip),
-      });
+      // Sử dụng tripService để tạo trip mới
+      const response = await tripService.createTrip(newTrip);
 
-      if (response.ok) {
-        const createdTrip = await response.json();
-        router.push(`/trip/${createdTrip.id}`);
+      if (response.data) {
+        router.push(`/trip/${response.data.id}`);
       } else {
         throw new Error("Failed to create trip");
       }

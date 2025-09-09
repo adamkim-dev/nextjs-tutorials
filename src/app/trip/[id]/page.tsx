@@ -4,11 +4,15 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Activity, Trip, User, TripStatus } from "@/app/models";
 import Link from "next/link";
-import useQueryAllTrips from "@/app/hooks/queries/useQueryTrips";
+import tripService from "@/app/services/tripService";
+import activityService from "@/app/services/activityService";
+import userService from "@/app/services/userService";
+import paymentService from "@/app/services/paymentService";
 
 export default function TripDetail() {
   const { id } = useParams();
   const [trip, setTrip] = useState<Trip | null>(null);
+  console.log("🚀 ~ TripDetail ~ trip:", trip);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -21,30 +25,38 @@ export default function TripDetail() {
   const [paymentNote, setPaymentNote] = useState("");
   const [showWarning, setShowWarning] = useState(false);
 
-  const response = useQueryAllTrips();
-
   useEffect(() => {
-    // Fetch trip data
-    // Fetch activities data
-    fetch(`/api/activities`)
-      .then((res) => res.json())
-      .then((allActivities) => {
-        setActivities(allActivities.filter((a: Activity) => a.tripId === id));
-      });
+    const fetchData = async () => {
+      const tripResponse = await tripService.fetchTripById(id as string);
+      if (tripResponse.data) {
+        setTrip(tripResponse.data);
+      }
 
-    // Fetch users data
-    fetch(`/api/users`)
-      .then((res) => res.json())
-      .then(setUsers);
+      // Fetch activities for this trip
+      const activitiesResponse = await activityService.fetchActivitiesByTripId(
+        id as string
+      );
+      if (activitiesResponse.data) {
+        setActivities(activitiesResponse.data);
+      }
+
+      // Fetch users
+      const usersResponse = await userService.fetchAllUsers();
+      if (usersResponse.data) {
+        setUsers(usersResponse.data);
+      }
+    };
+
+    fetchData();
   }, [id]);
 
   if (!trip) return <div>Loading...</div>;
 
-  // Calculate total money spent on the trip
   const totalTripMoney = activities.reduce(
     (sum, activity) => sum + activity.totalMoney,
     0
   );
+  console.log("🚀 ~ TripDetail ~ activities:", activities);
 
   // Get user names for payers
   const payersWithNames =
@@ -62,7 +74,7 @@ export default function TripDetail() {
       const user = users.find((u) => u.id === participant.userId);
       const activityCosts = activities
         .filter((activity) =>
-          activity.participants.some((p) => p.userId === participant.userId)
+          activity?.participants?.some((p) => p.userId === participant.userId)
         )
         .reduce((sum, activity) => {
           const participantCost =
@@ -130,17 +142,14 @@ export default function TripDetail() {
       return;
     }
 
-    // Update trip status via API
+    // Update trip status via tripService
     try {
-      const response = await fetch(`/api/trips/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...trip, status: newStatus }),
+      const response = await tripService.updateTrip(id as string, {
+        status: newStatus,
       });
 
-      if (response.ok) {
-        const updatedTrip = await response.json();
-        setTrip(updatedTrip);
+      if (response.data) {
+        setTrip(response.data);
       }
     } catch (error) {
       console.error("Error updating trip status:", error);
@@ -151,33 +160,30 @@ export default function TripDetail() {
     e.preventDefault();
 
     try {
-      const participant = trip.participants.find(
+      const participant = trip?.participants.find(
         (p) => p.userId === selectedUserId
       );
       if (!participant) return;
 
       const payment = {
-        id: Date.now().toString(),
-        tripId: trip.id,
+        tripId: trip?.id as string,
         userId: selectedUserId,
         amount: parseFloat(paymentAmount),
         paymentDate,
         note: paymentNote,
       };
 
-      // Update payment history
-      const response = await fetch(`/api/trips/${id}/payments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payment),
-      });
+      // Use paymentService to create payment
+      const response = await paymentService.createPayment(payment);
 
-      if (response.ok) {
+      if (response.data) {
         // Refresh trip data
-        const updatedTrip = await fetch(`/api/trips/${id}`).then((res) =>
-          res.json()
+        const updatedTripResponse = await tripService.fetchTripById(
+          id as string
         );
-        setTrip(updatedTrip);
+        if (updatedTripResponse.data) {
+          setTrip(updatedTripResponse.data);
+        }
 
         // Reset form
         setShowPaymentForm(false);

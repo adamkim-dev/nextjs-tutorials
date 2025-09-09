@@ -4,6 +4,9 @@ import { PaymentHistory, Trip, User } from "@/app/models";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import tripService from "@/app/services/tripService";
+import userService from "@/app/services/userService";
+import paymentService from "@/app/services/paymentService";
 
 export default function PaymentHistoryPage() {
   const { id } = useParams();
@@ -12,20 +15,27 @@ export default function PaymentHistoryPage() {
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    // Fetch trip data
-    fetch(`/api/trips/${id}`)
-      .then((res) => res.json())
-      .then(setTrip);
+    const fetchData = async () => {
+      // Fetch trip data using tripService
+      const tripResponse = await tripService.fetchTripById(id as string);
+      if (tripResponse.data) {
+        setTrip(tripResponse.data);
+      }
 
-    // Fetch payment history
-    fetch(`/api/trips/${id}/payments`)
-      .then((res) => res.json())
-      .then(setPayments);
+      // Fetch payment history using paymentService
+      const paymentsResponse = await paymentService.fetchPaymentsByTripId(id as string);
+      if (paymentsResponse.data) {
+        setPayments(paymentsResponse.data);
+      }
 
-    // Fetch users
-    fetch("/api/users")
-      .then((res) => res.json())
-      .then(setUsers);
+      // Fetch users using userService
+      const usersResponse = await userService.fetchAllUsers();
+      if (usersResponse.data) {
+        setUsers(usersResponse.data);
+      }
+    };
+
+    fetchData();
   }, [id]);
 
   if (!trip) return <div>Loading...</div>;
