@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { User, TripStatus } from "@/app/models";
 import Link from "next/link";
 import tripService from "../services/tripService";
-import userService from "../services/userService";
+import useUsers from "../hooks/useUsers";
 
 export default function CreateTrip() {
   const router = useRouter();
@@ -23,17 +23,15 @@ export default function CreateTrip() {
   const [newUserPhone, setNewUserPhone] = useState("");
   const [isAddingUser, setIsAddingUser] = useState(false);
 
-  // Fetch users when component mounts
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  // Get users from custom hook
+  const { data: reduxUsers, isLoading: isLoadingUsers } = useUsers();
 
-  const fetchUsers = async () => {
-    const response = await userService.fetchAllUsers();
-    if (response.data) {
-      setUsers(response.data);
+  // Set users from Redux data
+  useEffect(() => {
+    if (reduxUsers && reduxUsers.length > 0) {
+      setUsers(reduxUsers);
     }
-  };
+  }, [reduxUsers]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -61,7 +59,7 @@ export default function CreateTrip() {
       const response = await tripService.createTrip(newTrip);
 
       if (response.data) {
-        router.push(`/trip/${response.data.id}`);
+        router.push(`/trips/${response.data.id}`);
       } else {
         throw new Error("Failed to create trip");
       }
@@ -81,6 +79,8 @@ export default function CreateTrip() {
     );
   };
 
+  const { addUser } = useUsers();
+
   const handleAddUser = async () => {
     if (!newUserName || !newUserEmail || !newUserPhone) {
       alert("Please fill in all user information");
@@ -97,18 +97,11 @@ export default function CreateTrip() {
         phoneNumber: newUserPhone,
       };
 
-      // Gửi request để tạo user mới
-      const response = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newUser),
-      });
-
-      if (response.ok) {
-        const createdUser = await response.json();
-
-        // Cập nhật danh sách users
-        setUsers((prev) => [...prev, createdUser]);
+      // Sử dụng Redux action để tạo user mới
+      const resultAction = await addUser(newUser);
+      
+      if (resultAction.meta.requestStatus === 'fulfilled') {
+        const createdUser = resultAction.payload as User;
 
         // Tự động chọn user mới
         setSelectedUsers((prev) => [...prev, createdUser.id]);

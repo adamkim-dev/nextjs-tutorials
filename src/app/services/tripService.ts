@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SplitSBClient } from "../utils/supabase/SplitSBClient";
-import { Trip } from "../models";
+import { Activity, Trip } from "../models";
 import { IBaseResponse } from "../model/common.model";
 
 export class TripService extends SplitSBClient {
@@ -45,12 +45,24 @@ export class TripService extends SplitSBClient {
 
       // Chuyển đổi dữ liệu từ snake_case sang camelCase
       // và cấu trúc lại dữ liệu để phù hợp với model Trip
+      const formattedActivities = data.activities
+        ? data.activities.map((activity: Activity) => ({
+            ...this.toCamelCase(activity),
+            participants: activity.participants
+              ? activity.participants.map((participant: any) => ({
+                  ...this.toCamelCase(participant),
+                  totalMoneyPerUser: participant.total_money_per_user || 0,
+                }))
+              : [],
+          }))
+        : [];
+
       const formattedData = {
         ...this.toCamelCase(data),
         participants: data.trip_participants
           ? this.toCamelCase(data.trip_participants)
           : [],
-        activities: data.activities ? this.toCamelCase(data.activities) : [],
+        activities: formattedActivities,
       };
 
       return {

@@ -5,8 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { User, Trip, TripParticipant } from "@/app/models";
 import Link from "next/link";
 import tripService from "@/app/services/tripService";
-import userService from "@/app/services/userService";
 import activityService from "@/app/services/activityService";
+import useUsers from "@/app/hooks/useUsers";
 
 export default function CreateActivity() {
   const { id: tripId } = useParams();
@@ -25,6 +25,9 @@ export default function CreateActivity() {
   );
   const [isLoading, setIsLoading] = useState(false);
 
+  // Get users from custom hook
+  const { data: reduxUsers } = useUsers();
+
   // Fetch trip and users when component mounts
   useEffect(() => {
     // Fetch trip details
@@ -37,7 +40,7 @@ export default function CreateActivity() {
         // Kiểm tra trạng thái trip
         if (tripData.status !== "on-going") {
           alert("Activities can only be created for on-going trips");
-          router.push(`/trip/${tripId}`);
+          router.push(`/trips/${tripId}`);
           return;
         }
 
@@ -46,13 +49,12 @@ export default function CreateActivity() {
           (p: TripParticipant) => p.userId
         );
 
-        // Fetch tất cả người dùng
-        const usersResponse = await userService.fetchAllUsers();
-        if (usersResponse.data) {
-          setUsers(usersResponse.data);
+        // Sử dụng users từ Redux store
+        if (reduxUsers.length > 0) {
+          setUsers(reduxUsers);
           // Lọc người dùng trong trip
           setTripUsers(
-            usersResponse.data.filter((user) => tripUserIds.includes(user.id))
+            reduxUsers.filter((user) => tripUserIds.includes(user.id))
           );
           // Mặc định chọn tất cả người dùng trong trip
           setSelectedParticipants(tripUserIds);
@@ -124,7 +126,7 @@ export default function CreateActivity() {
           await tripService.updateTrip(tripId as string, updatedTrip);
         }
 
-        router.push(`/trip/${tripId}`);
+        router.push(`/trips/${tripId}`);
       } else {
         throw new Error("Failed to create activity");
       }
@@ -148,7 +150,7 @@ export default function CreateActivity() {
     <div className="font-sans min-h-screen p-4 sm:p-8 bg-gray-50 text-foreground">
       <header className="py-4 text-center text-xl font-bold flex items-center justify-between bg-white rounded-lg shadow p-4 mb-6">
         <Link
-          href={`/trip/${tripId}`}
+          href={`/trips/${tripId}`}
           className="text-blue-500 hover:text-blue-700 transition"
         >
           <i className="fas fa-arrow-left"></i> Back

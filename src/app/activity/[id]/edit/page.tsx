@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { User, Activity, ActivityParticipant } from "@/app/models";
 import Link from "next/link";
 import activityService from "@/app/services/activityService";
-import userService from "@/app/services/userService";
+import useUsers from "@/app/hooks/useUsers";
 
 export default function EditActivity() {
   const { id } = useParams();
@@ -21,6 +21,9 @@ export default function EditActivity() {
   );
   const [isLoading, setIsLoading] = useState(false);
   const [tripId, setTripId] = useState<string>("");
+
+  // Get users from custom hook
+  const { data: reduxUsers } = useUsers();
 
   // Fetch activity, trip and users when component mounts
   useEffect(() => {
@@ -41,10 +44,9 @@ export default function EditActivity() {
           data.participants.map((p: ActivityParticipant) => p.userId)
         );
 
-        // Fetch all users using userService
-        const usersResponse = await userService.fetchAllUsers();
-        if (usersResponse.data) {
-          setUsers(usersResponse.data);
+        // Sử dụng users từ Redux store
+        if (reduxUsers.length > 0) {
+          setUsers(reduxUsers);
         }
       }
     };
@@ -99,7 +101,7 @@ export default function EditActivity() {
       );
 
       if (response.data) {
-        router.push(`/trip/${activity.tripId}`);
+        router.push(`/trips/${activity.tripId}`);
       } else {
         throw new Error("Failed to update activity");
       }
@@ -125,7 +127,7 @@ export default function EditActivity() {
     <div className="font-sans min-h-screen p-4 sm:p-8 bg-gray-50 text-foreground">
       <header className="py-4 text-center text-xl font-bold flex items-center justify-between bg-white rounded-lg shadow p-4 mb-6">
         <Link
-          href={`/trip/${tripId}`}
+          href={`/trips/${tripId}`}
           className="text-blue-500 hover:text-blue-700 transition"
         >
           <span>⬅️</span> Back

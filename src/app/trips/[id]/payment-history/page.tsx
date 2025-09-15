@@ -5,14 +5,24 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import tripService from "@/app/services/tripService";
-import userService from "@/app/services/userService";
 import paymentService from "@/app/services/paymentService";
+import useUsers from "@/app/hooks/useUsers";
 
 export default function PaymentHistoryPage() {
   const { id } = useParams();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [payments, setPayments] = useState<PaymentHistory[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  
+  // Get users from Redux store
+  const { data: reduxUsers } = useUsers();
+  
+  // Set users state from Redux data
+  useEffect(() => {
+    if (reduxUsers && reduxUsers.length > 0) {
+      setUsers(reduxUsers);
+    }
+  }, [reduxUsers]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,12 +37,6 @@ export default function PaymentHistoryPage() {
       if (paymentsResponse.data) {
         setPayments(paymentsResponse.data);
       }
-
-      // Fetch users using userService
-      const usersResponse = await userService.fetchAllUsers();
-      if (usersResponse.data) {
-        setUsers(usersResponse.data);
-      }
     };
 
     fetchData();
@@ -43,7 +47,7 @@ export default function PaymentHistoryPage() {
   return (
     <div className="font-sans min-h-screen p-4 sm:p-8 bg-background text-foreground">
       <header className="py-4 text-center text-xl font-bold flex items-center justify-between">
-        <Link href={`/trip/${id}`} className="text-blue-500">
+        <Link href={`/trips/${id}`} className="text-blue-500">
           <i className="fas fa-arrow-left"></i> Quay lại
         </Link>
         <span>Payment History: {trip.name}</span>

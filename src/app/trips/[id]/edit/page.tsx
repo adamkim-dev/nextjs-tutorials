@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import tripService from "@/app/services/tripService";
-import userService from "@/app/services/userService";
+import useUsers from "@/app/hooks/useUsers";
 
 export default function EditTrip() {
   const { id } = useParams();
@@ -16,6 +16,9 @@ export default function EditTrip() {
   const [tripName, setTripName] = useState("");
   const [tripDate, setTripDate] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Get users from custom hook
+  const { data: reduxUsers } = useUsers();
 
   // Fetch trip and users when component mounts
   useEffect(() => {
@@ -32,10 +35,9 @@ export default function EditTrip() {
         );
       }
 
-      // Fetch all users using userService
-      const usersResponse = await userService.fetchAllUsers();
-      if (usersResponse.data) {
-        setUsers(usersResponse.data);
+      // Sử dụng users từ Redux store
+      if (reduxUsers.length > 0) {
+        setUsers(reduxUsers);
       }
     };
 
@@ -90,7 +92,7 @@ export default function EditTrip() {
       });
 
       if (response.data) {
-        router.push(`/trip/${id}`);
+        router.push(`/trips/${id}`);
       } else {
         throw new Error("Failed to update trip");
       }
@@ -116,7 +118,7 @@ export default function EditTrip() {
     <div className="font-sans min-h-screen p-4 sm:p-8 bg-gray-50 text-foreground">
       <header className="py-4 text-center text-xl font-bold flex items-center justify-between bg-white rounded-lg shadow p-4 mb-6">
         <Link
-          href={`/trip/${id}`}
+          href={`/trips/${id}`}
           className="text-blue-500 hover:text-blue-700 transition"
         >
           <span>⬅️</span> Back

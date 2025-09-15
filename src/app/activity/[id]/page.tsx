@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Activity, User } from "@/app/models";
 import activityService from "@/app/services/activityService";
-import userService from "@/app/services/userService";
+import useUsers from "@/app/hooks/useUsers";
 
 export default function ActivityDetail() {
   const { id } = useParams();
@@ -12,6 +12,9 @@ export default function ActivityDetail() {
   const [activity, setActivity] = useState<Activity | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
+
+  // Get users from custom hook
+  const { data: reduxUsers } = useUsers();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -21,10 +24,9 @@ export default function ActivityDetail() {
         setActivity(activityResponse.data);
       }
 
-      // Fetch users using userService
-      const usersResponse = await userService.fetchAllUsers();
-      if (usersResponse.data) {
-        setUsers(usersResponse.data);
+      // Sử dụng users từ Redux store
+      if (reduxUsers.length > 0) {
+        setUsers(reduxUsers);
       }
     };
 
@@ -49,7 +51,7 @@ export default function ActivityDetail() {
       const response = await activityService.deleteActivity(id as string);
 
       if (!response.error) {
-        router.push(`/trip/${activity.tripId}`);
+        router.push(`/trips/${activity.tripId}`);
       } else {
         throw new Error("Failed to delete activity");
       }
@@ -64,7 +66,7 @@ export default function ActivityDetail() {
     <div className="font-sans min-h-screen p-4 sm:p-8 bg-background text-foreground">
       <header className="py-4 text-center text-xl font-bold">
         {activity.name}
-        <button onClick={() => router.push(`/trip/${activity.tripId}`)}>
+        <button onClick={() => router.push(`/trips/${activity.tripId}`)}>
           Go back
         </button>
       </header>

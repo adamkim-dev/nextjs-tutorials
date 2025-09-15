@@ -6,8 +6,8 @@ import { Activity, Trip, User, TripStatus } from "@/app/models";
 import Link from "next/link";
 import tripService from "@/app/services/tripService";
 import activityService from "@/app/services/activityService";
-import userService from "@/app/services/userService";
 import paymentService from "@/app/services/paymentService";
+import useUsers from "@/app/hooks/useUsers";
 
 export default function TripDetail() {
   const { id } = useParams();
@@ -25,6 +25,16 @@ export default function TripDetail() {
   const [paymentNote, setPaymentNote] = useState("");
   const [showWarning, setShowWarning] = useState(false);
 
+  // Get users from custom hook
+  const { data: reduxUsers } = useUsers();
+  
+  // Set users state from Redux data
+  useEffect(() => {
+    if (reduxUsers && reduxUsers.length > 0) {
+      setUsers(reduxUsers);
+    }
+  }, [reduxUsers]);
+
   useEffect(() => {
     const fetchData = async () => {
       const tripResponse = await tripService.fetchTripById(id as string);
@@ -39,12 +49,6 @@ export default function TripDetail() {
       if (activitiesResponse.data) {
         setActivities(activitiesResponse.data);
       }
-
-      // Fetch users
-      const usersResponse = await userService.fetchAllUsers();
-      if (usersResponse.data) {
-        setUsers(usersResponse.data);
-      }
     };
 
     fetchData();
@@ -52,11 +56,7 @@ export default function TripDetail() {
 
   if (!trip) return <div>Loading...</div>;
 
-  const totalTripMoney = activities.reduce(
-    (sum, activity) => sum + activity.totalMoney,
-    0
-  );
-  console.log("🚀 ~ TripDetail ~ activities:", activities);
+  const totalTripMoney = trip.totalMoney;
 
   // Get user names for payers
   const payersWithNames =
@@ -114,10 +114,12 @@ export default function TripDetail() {
   );
 
   // Calculate total collected money and total debt
-  const totalCollectedMoney = participantsWithTotals.reduce(
-    (sum, participant) => sum + (participant.paidAmount || 0),
-    0
-  );
+  const totalCollectedMoney =
+    (trip.payers?.reduce((sum, payer) => sum + payer.spentMoney, 0) || 0) +
+    participantsWithTotals.reduce(
+      (sum, participant) => sum + (participant.paidAmount || 0),
+      0
+    );
 
   const totalDebtMoney = participantsNeedToPay.reduce(
     (sum, participant) => sum + participant.remainingToPay,
@@ -281,7 +283,7 @@ export default function TripDetail() {
           )}
           {trip.status !== "planed" && (
             <Link
-              href={`/trip/${id}/payment-history`}
+              href={`/trips/${id}/payment-history`}
               className="bg-purple-500 hover:bg-purple-600 text-white rounded-lg p-3 transition shadow-sm flex items-center justify-center"
             >
               <span className="mr-2">📜</span>
@@ -291,7 +293,7 @@ export default function TripDetail() {
 
           {trip.status === "on-going" && (
             <Link
-              href={`/trip/${id}/create-activity`}
+              href={`/trips/${id}/create-activity`}
               className="bg-green-500 hover:bg-green-600 text-white rounded-lg p-3 transition shadow-sm flex items-center justify-center"
             >
               <span className="mr-2">➕</span>
@@ -300,7 +302,7 @@ export default function TripDetail() {
           )}
 
           <Link
-            href={`/trip/${id}/edit`}
+            href={`/trips/${id}/edit`}
             className="bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg p-3 transition shadow-sm flex items-center justify-center"
           >
             <span className="mr-2">✏️</span>
@@ -339,7 +341,7 @@ export default function TripDetail() {
           </div>
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow transition">
             <div className="text-sm text-gray-500">Total</div>
-            <div className="font-medium">${totalTripMoney}</div>
+            <div className="font-medium">${trip.totalMoney}</div>
           </div>
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow transition">
             <div className="text-sm text-gray-500">Total Collected</div>
@@ -351,6 +353,15 @@ export default function TripDetail() {
             <div className="text-sm text-gray-500">Total Debt</div>
             <div className="font-medium text-red-600">
               ${totalDebtMoney.toFixed(2)}
+            </div>
+          </div>
+          <div className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow transition">
+            <div className="text-sm text-gray-500">Chi phí mỗi người</div>
+            <div className="font-medium">
+              $
+              {participantsWithTotals.length > 0
+                ? (totalTripMoney / participantsWithTotals.length).toFixed(2)
+                : "0.00"}
             </div>
           </div>
         </div>
@@ -393,19 +404,23 @@ export default function TripDetail() {
                 <div>
                   <div className="font-medium">{participant.name}</div>
                   <div className="text-sm">
+                    <span className="text-gray-600">
+                      Chi phí: ${participant.totalToPay.toFixed(2)}
+                    </span>
+                    <br />
                     {participant.remainingToPay > 0 && (
                       <span className="text-red-500">
-                        Owes: ${participant.remainingToPay.toFixed(2)}
+                        Cần trả: ${participant.remainingToPay.toFixed(2)}
                       </span>
                     )}
                     {participant.remainingToPay < 0 && (
                       <span className="text-green-500">
-                        To receive: $
+                        Nhận lại: $
                         {Math.abs(participant.remainingToPay).toFixed(2)}
                       </span>
                     )}
                     {Math.abs(participant.remainingToPay) < 0.01 && (
-                      <span className="text-gray-500">Settled</span>
+                      <span className="text-gray-500">Đã thanh toán</span>
                     )}
                   </div>
                 </div>
@@ -420,6 +435,7 @@ export default function TripDetail() {
         <ul className="divide-y">
           {activities.map((activity) => {
             const payer = users.find((u) => u.id === activity.payerId);
+            console.log("🚀 ~ payer:", payer);
             return (
               <li key={activity.id} className="py-2">
                 <Link

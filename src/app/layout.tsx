@@ -5,6 +5,7 @@ import { SupabaseProvider } from "./components/providers/SupabaseProvider";
 import Header from "./components/Header";
 import QueryProvider from "./components/providers/QueryProvider";
 import ReduxProvider from "./components/providers/ReduxProvider";
+import UserDataProvider from "./components/providers/UserDataProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,10 +36,12 @@ export default function RootLayout({
         <ReduxProvider>
           <QueryProvider>
             <SupabaseProvider>
-              <Header />
-              <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                {children}
-              </main>
+              <UserDataProvider>
+                <Header />
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                  {children}
+                </main>
+              </UserDataProvider>
             </SupabaseProvider>
           </QueryProvider>
         </ReduxProvider>
