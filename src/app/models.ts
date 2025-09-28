@@ -7,25 +7,27 @@ export interface User {
 }
 
 export interface ActivityParticipant {
-  userId: string;
+  id: string;
   totalMoneyPerUser: number;
+  userId: string;
 }
 
 export interface Activity {
   id: string;
-  tripId: string; // Reference to parent Trip
+  tripId: string;
   name: string;
-  time: string;
-  participants: ActivityParticipant[];
+  createdAt: string;
+  updatedAt: string;
+  activityParticipants?: ActivityParticipant[];
   totalMoney: number;
-  payerId: string; // Reference to User
+  payerId: string;
 }
 
 export interface TripParticipant {
   userId: string;
   isPaid: boolean;
   totalMoneyPerUser: number;
-  paidAmount: number; // Số tiền đã đóng
+  paidAmount: number;
 }
 
 export interface TripPayer {
@@ -53,6 +55,24 @@ export interface Trip {
   status: TripStatus;
   totalMoney: number;
   moneyPerUser: number;
-  activities: string[]; // Array of Activity IDs
-  paymentHistory: string[]; // Array of PaymentHistory IDs
+  activities: TripActivity[];
+  paymentHistory: string[];
+}
+
+export interface TripActivity {
+  id: string;
+  name: string;
+  tripId: string;
+  payerId: string;
+  createdAt: string;
+  updatedAt: string;
+  totalMoney: number;
+}
+
+export interface NewActivityPayload {
+  tripId: string;
+  name: string;
+  totalMoney: number;
+  payerId: string;
+  participants: ActivityParticipant[];
 }

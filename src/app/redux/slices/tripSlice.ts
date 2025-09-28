@@ -8,12 +8,14 @@ interface TripState {
   trips: Trip[];
   status: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;
+  tripDetail: Trip | null;
 }
 
 const initialState: TripState = {
   trips: [],
   status: "idle",
   error: null,
+  tripDetail: null,
 };
 
 export const fetchTrips = createAsyncThunk(
@@ -31,10 +33,29 @@ export const fetchTrips = createAsyncThunk(
   }
 );
 
+export const fetchDetailTrip = createAsyncThunk(
+  "trips/fetchDetailTrip",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const response = await tripService.fetchTripById(id);
+      if (response.error) {
+        return rejectWithValue(response.error);
+      }
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error);
+    }
+  }
+);
+
 const tripSlice = createSlice({
   name: "trips",
   initialState,
-  reducers: {},
+  reducers: {
+    setTripDetail: (state, action: PayloadAction<Trip | null>) => {
+      state.tripDetail = action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchTrips.pending, (state) => {
@@ -48,6 +69,21 @@ const tripSlice = createSlice({
         }
       )
       .addCase(fetchTrips.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload as string;
+      });
+    builder
+      .addCase(fetchDetailTrip.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(
+        fetchDetailTrip.fulfilled,
+        (state, action: PayloadAction<Trip | null>) => {
+          state.status = "succeeded";
+          state.tripDetail = action.payload || null;
+        }
+      )
+      .addCase(fetchDetailTrip.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload as string;
       });

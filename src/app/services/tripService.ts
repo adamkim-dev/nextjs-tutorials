@@ -33,7 +33,8 @@ export class TripService extends SplitSBClient {
           `
         *,
         trip_participants(*),
-        activities(*)
+        activities(*),
+        trip_payers(*)
       `
         )
         .eq("id", id)
@@ -43,13 +44,11 @@ export class TripService extends SplitSBClient {
         return { data: null, error: error };
       }
 
-      // Chuyển đổi dữ liệu từ snake_case sang camelCase
-      // và cấu trúc lại dữ liệu để phù hợp với model Trip
       const formattedActivities = data.activities
         ? data.activities.map((activity: Activity) => ({
             ...this.toCamelCase(activity),
-            participants: activity.participants
-              ? activity.participants.map((participant: any) => ({
+            participants: activity.activityParticipants
+              ? activity.activityParticipants.map((participant: any) => ({
                   ...this.toCamelCase(participant),
                   totalMoneyPerUser: participant.total_money_per_user || 0,
                 }))
@@ -76,10 +75,8 @@ export class TripService extends SplitSBClient {
 
   createTrip = async (trip: Omit<Trip, "id">): Promise<IBaseResponse<Trip>> => {
     try {
-      // Tách participants ra khỏi trip object
       const { participants, ...tripData } = trip;
 
-      // Chuyển đổi các trường camelCase sang snake_case
       const snakeCaseTripData = {
         name: tripData.name,
         date: tripData.date,

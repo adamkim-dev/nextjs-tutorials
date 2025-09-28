@@ -36,13 +36,13 @@ export default function EditActivity() {
         const data = activityResponse.data;
         setActivity(data);
         setActivityName(data.name);
-        setActivityTime(data.time);
+        setActivityTime(data.updatedAt);
         setTotalMoney(data.totalMoney.toString());
         setPayerId(data.payerId);
         setTripId(data.tripId);
-        setSelectedParticipants(
-          data.participants.map((p: ActivityParticipant) => p.userId)
-        );
+        // setSelectedParticipants(
+        //   data.participants.map((p: ActivityParticipant) => p.userId)
+        // );
 
         // Sử dụng users từ Redux store
         if (reduxUsers.length > 0) {
@@ -58,59 +58,59 @@ export default function EditActivity() {
     e.preventDefault();
     setIsLoading(true);
 
-    try {
-      if (!activity) return;
+    // try {
+    //   if (!activity) return;
 
-      // Calculate money per user
-      const moneyPerUser = parseFloat(totalMoney) / selectedParticipants.length;
+    //   // Calculate money per user
+    //   const moneyPerUser = parseFloat(totalMoney) / selectedParticipants.length;
 
-      // Create updated participants array
-      const updatedParticipants = selectedParticipants.map((userId) => {
-        // Check if participant already exists
-        const existingParticipant = activity.participants.find(
-          (p) => p.userId === userId
-        );
+    //   // Create updated participants array
+    //   const updatedParticipants = selectedParticipants.map((userId) => {
+    //     // Check if participant already exists
+    //     const existingParticipant = activity.participants.find(
+    //       (p) => p.userId === userId
+    //     );
 
-        if (existingParticipant) {
-          return {
-            ...existingParticipant,
-            totalMoneyPerUser: moneyPerUser,
-          };
-        }
+    //     if (existingParticipant) {
+    //       return {
+    //         ...existingParticipant,
+    //         totalMoneyPerUser: moneyPerUser,
+    //       };
+    //     }
 
-        // If new participant
-        return {
-          userId,
-          totalMoneyPerUser: moneyPerUser,
-        };
-      });
+    //     // If new participant
+    //     return {
+    //       userId,
+    //       totalMoneyPerUser: moneyPerUser,
+    //     };
+    //   });
 
-      // Create updated activity object
-      const updatedActivity = {
-        name: activityName,
-        time: activityTime,
-        totalMoney: parseFloat(totalMoney),
-        payerId,
-        participants: updatedParticipants,
-      };
+    //   // Create updated activity object
+    //   const updatedActivity = {
+    //     name: activityName,
+    //     time: activityTime,
+    //     totalMoney: parseFloat(totalMoney),
+    //     payerId,
+    //     participants: updatedParticipants,
+    //   };
 
-      // Use activityService to update activity
-      const response = await activityService.updateActivity(
-        id as string,
-        updatedActivity
-      );
+    //   // Use activityService to update activity
+    //   const response = await activityService.updateActivity(
+    //     id as string,
+    //     updatedActivity
+    //   );
 
-      if (response.data) {
-        router.push(`/trips/${activity.tripId}`);
-      } else {
-        throw new Error("Failed to update activity");
-      }
-    } catch (error) {
-      console.error("Error updating activity:", error);
-      alert("Failed to update activity. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    //   if (response.data) {
+    //     router.push(`/trips/${activity.tripId}`);
+    //   } else {
+    //     throw new Error("Failed to update activity");
+    //   }
+    // } catch (error) {
+    //   console.error("Error updating activity:", error);
+    //   alert("Failed to update activity. Please try again.");
+    // } finally {
+    //   setIsLoading(false);
+    // }
   };
 
   const toggleParticipantSelection = (userId: string) => {

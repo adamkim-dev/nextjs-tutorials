@@ -1,287 +1,84 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { Activity, Trip, User, TripStatus } from "@/app/models";
-import Link from "next/link";
-import tripService from "@/app/services/tripService";
-import activityService from "@/app/services/activityService";
-import paymentService from "@/app/services/paymentService";
+import useTrips from "@/app/hooks/useTrips";
 import useUsers from "@/app/hooks/useUsers";
+import { TripActivity } from "@/app/models";
+import { Utility } from "@/app/utils";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useCallback } from "react";
 
 export default function TripDetail() {
   const { id } = useParams();
-  const [trip, setTrip] = useState<Trip | null>(null);
-  console.log("🚀 ~ TripDetail ~ trip:", trip);
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [showRefundForm, setShowRefundForm] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState("");
-  const [paymentAmount, setPaymentAmount] = useState("");
-  const [paymentDate, setPaymentDate] = useState(
-    new Date().toISOString().slice(0, 16)
-  );
-  const [paymentNote, setPaymentNote] = useState("");
-  const [showWarning, setShowWarning] = useState(false);
+  const { tripDetail } = useTrips({ tripId: id as string });
+  const router = useRouter();
+  const { participants, activities, payers } = tripDetail || {};
 
-  // Get users from custom hook
-  const { data: reduxUsers } = useUsers();
-  
-  // Set users state from Redux data
-  useEffect(() => {
-    if (reduxUsers && reduxUsers.length > 0) {
-      setUsers(reduxUsers);
-    }
-  }, [reduxUsers]);
+  console.log("🚀 ~ TripDetail ~ tripDetail:", tripDetail);
+  const { data: users, getUserById } = useUsers();
+  console.log("🚀 ~ TripDetail ~ users:", users);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const tripResponse = await tripService.fetchTripById(id as string);
-      if (tripResponse.data) {
-        setTrip(tripResponse.data);
-      }
-
-      // Fetch activities for this trip
-      const activitiesResponse = await activityService.fetchActivitiesByTripId(
-        id as string
-      );
-      if (activitiesResponse.data) {
-        setActivities(activitiesResponse.data);
-      }
-    };
-
-    fetchData();
-  }, [id]);
-
-  if (!trip) return <div>Loading...</div>;
-
-  const totalTripMoney = trip.totalMoney;
-
-  // Get user names for payers
-  const payersWithNames =
-    trip.payers?.map((payer) => {
-      const user = users.find((u) => u.id === payer.userId);
-      return {
-        ...payer,
-        name: user?.name || "Unknown",
-      };
-    }) || [];
-
-  // Calculate total money per participant
-  const participantsWithTotals =
-    trip.participants?.map((participant) => {
-      const user = users.find((u) => u.id === participant.userId);
-      const activityCosts = activities
-        .filter((activity) =>
-          activity?.participants?.some((p) => p.userId === participant.userId)
-        )
-        .reduce((sum, activity) => {
-          const participantCost =
-            activity.participants.find((p) => p.userId === participant.userId)
-              ?.totalMoneyPerUser || 0;
-          return sum + participantCost;
-        }, 0);
-
-      // Find if this person is a payer and how much they've spent
-      const payer = trip.payers?.find((p) => p.userId === participant.userId);
-      const spentMoney = payer ? payer.spentMoney : 0;
-
-      // Calculate total paid amount (including money spent and money paid)
-      const totalPaid = spentMoney + (participant.paidAmount || 0);
-
-      // Calculate remaining amount to pay or to be refunded
-      const remainingToPay = activityCosts - totalPaid;
-
-      return {
-        ...participant,
-        name: user?.name || "Unknown",
-        totalToPay: activityCosts,
-        spentMoney,
-        totalPaid,
-        remainingToPay,
-      };
-    }) || [];
-
-  // Filter participants who need to pay (remainingToPay > 0)
-  const participantsNeedToPay = participantsWithTotals.filter(
-    (p) => p.remainingToPay > 0
-  );
-
-  // Filter participants who need to be refunded (remainingToPay < 0)
-  const participantsNeedRefund = participantsWithTotals.filter(
-    (p) => p.remainingToPay < 0
-  );
-
-  // Calculate total collected money and total debt
-  const totalCollectedMoney =
-    (trip.payers?.reduce((sum, payer) => sum + payer.spentMoney, 0) || 0) +
-    participantsWithTotals.reduce(
-      (sum, participant) => sum + (participant.paidAmount || 0),
-      0
-    );
-
-  const totalDebtMoney = participantsNeedToPay.reduce(
-    (sum, participant) => sum + participant.remainingToPay,
-    0
-  );
-
-  // Check if all payments are settled
-  const isAllSettled = participantsWithTotals.every(
-    (p) => Math.abs(p.remainingToPay) < 0.01
-  );
-
-  // Handle status change
-  const changeStatus = async () => {
-    const statusOrder: TripStatus[] = ["planed", "on-going", "ended"];
-    const currentIndex = statusOrder.indexOf(trip.status);
-    const nextIndex = (currentIndex + 1) % statusOrder.length;
-    const newStatus = statusOrder[nextIndex];
-
-    // Check if trying to close the trip without settling all payments
-    if (newStatus === "ended" && !isAllSettled) {
-      setShowWarning(true);
-      return;
-    }
-
-    // Update trip status via tripService
-    try {
-      const response = await tripService.updateTrip(id as string, {
-        status: newStatus,
-      });
-
-      if (response.data) {
-        setTrip(response.data);
-      }
-    } catch (error) {
-      console.error("Error updating trip status:", error);
-    }
-  };
+  const changeStatus = async () => {};
 
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    try {
-      const participant = trip?.participants.find(
-        (p) => p.userId === selectedUserId
-      );
-      if (!participant) return;
-
-      const payment = {
-        tripId: trip?.id as string,
-        userId: selectedUserId,
-        amount: parseFloat(paymentAmount),
-        paymentDate,
-        note: paymentNote,
-      };
-
-      // Use paymentService to create payment
-      const response = await paymentService.createPayment(payment);
-
-      if (response.data) {
-        // Refresh trip data
-        const updatedTripResponse = await tripService.fetchTripById(
-          id as string
-        );
-        if (updatedTripResponse.data) {
-          setTrip(updatedTripResponse.data);
-        }
-
-        // Reset form
-        setShowPaymentForm(false);
-        setSelectedUserId("");
-        setPaymentAmount("");
-        setPaymentDate(new Date().toISOString().slice(0, 16));
-        setPaymentNote("");
-      }
-    } catch (error) {
-      console.error("Error processing payment:", error);
-    }
   };
 
   const handleRefundSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    try {
-      const participant = trip.participants.find(
-        (p) => p.userId === selectedUserId
-      );
-      if (!participant) return;
-
-      const payment = {
-        id: Date.now().toString(),
-        tripId: trip.id,
-        userId: selectedUserId,
-        amount: -parseFloat(paymentAmount), // Negative amount for refund
-        paymentDate,
-        note: `Refund: ${paymentNote}`,
-      };
-
-      // Update payment history
-      const response = await fetch(`/api/trips/${id}/payments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payment),
-      });
-
-      if (response.ok) {
-        // Refresh trip data
-        const updatedTrip = await fetch(`/api/trips/${id}`).then((res) =>
-          res.json()
-        );
-        setTrip(updatedTrip);
-
-        // Reset form
-        setShowRefundForm(false);
-        setSelectedUserId("");
-        setPaymentAmount("");
-        setPaymentDate(new Date().toISOString().slice(0, 16));
-        setPaymentNote("");
-      }
-    } catch (error) {
-      console.error("Error processing refund:", error);
-    }
   };
+
+  const getUserDetailById = useCallback(
+    (userId: string) => {
+      return users.find((user) => user.id === userId);
+    },
+    [users]
+  );
 
   return (
     <div className="font-sans min-h-screen p-4 sm:p-8 bg-gray-50 text-foreground">
       <header className="py-4 text-center text-xl font-bold flex items-center justify-between bg-white rounded-lg shadow p-4 mb-6">
-        <Link href="/" className="text-blue-500 hover:text-blue-700 transition">
+        <button
+          onClick={() => router.back()}
+          className="text-blue-500 hover:text-blue-700 transition"
+        >
           <i className="fas fa-arrow-left"></i> Back
-        </Link>
-        <span className="text-2xl">{trip.name}</span>
+        </button>
+        <span className="text-2xl">{tripDetail?.name}</span>
         <div className="w-8"></div> {/* Spacer for balance */}
       </header>
 
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold mb-4 border-b pb-2">Actions</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-          {trip.status === "on-going" && participantsNeedToPay.length > 0 && (
-            <button
-              className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg p-3 transition shadow-sm flex items-center justify-center"
-              onClick={() => {
-                setShowPaymentForm(!showPaymentForm);
-                setShowRefundForm(false);
-              }}
-            >
-              <span className="mr-2">{showPaymentForm ? "❌" : "💰"}</span>
-              {showPaymentForm ? "Cancel Payment" : "Collect Payment"}
-            </button>
-          )}
+          {/* {tripDetail?.status === "on-going" &&
+            participantsNeedToPay.length > 0 && (
+              <button
+                className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg p-3 transition shadow-sm flex items-center justify-center"
+                onClick={() => {
+                  setShowPaymentForm(!showPaymentForm);
+                  setShowRefundForm(false);
+                }}
+              >
+                <span className="mr-2">{showPaymentForm ? "❌" : "💰"}</span>
+                {showPaymentForm ? "Cancel Payment" : "Collect Payment"}
+              </button>
+            )} */}
 
-          {trip.status === "on-going" && participantsNeedRefund.length > 0 && (
-            <button
-              className="bg-green-500 hover:bg-green-600 text-white rounded-lg p-3 transition shadow-sm flex items-center justify-center"
-              onClick={() => {
-                setShowRefundForm(!showRefundForm);
-                setShowPaymentForm(false);
-              }}
-            >
-              <span className="mr-2">{showRefundForm ? "❌" : "💸"}</span>
-              {showRefundForm ? "Cancel Refund" : "Process Refund"}
-            </button>
-          )}
-          {trip.status !== "planed" && (
+          {/* {tripDetail?.status === "on-going" &&
+            participantsNeedRefund.length > 0 && (
+              <button
+                className="bg-green-500 hover:bg-green-600 text-white rounded-lg p-3 transition shadow-sm flex items-center justify-center"
+                onClick={() => {
+                  setShowRefundForm(!showRefundForm);
+                  setShowPaymentForm(false);
+                }}
+              >
+                <span className="mr-2">{showRefundForm ? "❌" : "💸"}</span>
+                {showRefundForm ? "Cancel Refund" : "Process Refund"}
+              </button>
+            )} */}
+          {tripDetail?.status !== "planed" && (
             <Link
               href={`/trips/${id}/payment-history`}
               className="bg-purple-500 hover:bg-purple-600 text-white rounded-lg p-3 transition shadow-sm flex items-center justify-center"
@@ -291,7 +88,7 @@ export default function TripDetail() {
             </Link>
           )}
 
-          {trip.status === "on-going" && (
+          {tripDetail?.status === "on-going" && (
             <Link
               href={`/trips/${id}/create-activity`}
               className="bg-green-500 hover:bg-green-600 text-white rounded-lg p-3 transition shadow-sm flex items-center justify-center"
@@ -314,7 +111,7 @@ export default function TripDetail() {
             onClick={changeStatus}
           >
             <span className="mr-2">🔄</span>
-            Change Status ({trip.status})
+            Change Status ({tripDetail?.status})
           </button>
         </div>
       </div>
@@ -326,8 +123,8 @@ export default function TripDetail() {
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow transition">
             <div className="text-sm text-gray-500">Date</div>
             <div className="font-medium">
-              {trip.date
-                ? new Date(trip.date).toLocaleDateString("en-GB", {
+              {tripDetail?.date
+                ? new Date(tripDetail?.date).toLocaleDateString("en-GB", {
                     day: "2-digit",
                     month: "short",
                     year: "numeric",
@@ -337,31 +134,28 @@ export default function TripDetail() {
           </div>
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow transition">
             <div className="text-sm text-gray-500">Status</div>
-            <div className="font-medium capitalize">{trip.status}</div>
+            <div className="font-medium capitalize">{tripDetail?.status}</div>
           </div>
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow transition">
             <div className="text-sm text-gray-500">Total</div>
-            <div className="font-medium">${trip.totalMoney}</div>
+            <div className="font-medium">${tripDetail?.totalMoney}</div>
           </div>
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow transition">
             <div className="text-sm text-gray-500">Total Collected</div>
             <div className="font-medium text-green-600">
-              ${totalCollectedMoney}
+              {/* ${totalCollectedMoney} */}
             </div>
           </div>
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow transition">
             <div className="text-sm text-gray-500">Total Debt</div>
             <div className="font-medium text-red-600">
-              ${totalDebtMoney.toFixed(2)}
+              {/* ${totalDebtMoney.toFixed(2)} */}
             </div>
           </div>
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow transition">
-            <div className="text-sm text-gray-500">Chi phí mỗi người</div>
+            <div className="text-sm text-gray-500">Average Expense</div>
             <div className="font-medium">
-              $
-              {participantsWithTotals.length > 0
-                ? (totalTripMoney / participantsWithTotals.length).toFixed(2)
-                : "0.00"}
+              ${tripDetail?.moneyPerUser?.toFixed(2)}
             </div>
           </div>
         </div>
@@ -369,22 +163,28 @@ export default function TripDetail() {
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-3 border-b pb-2">Payers</h3>
           <div className="flex flex-wrap gap-3">
-            {payersWithNames.map((payer, idx) => (
-              <div
-                key={idx}
-                className="flex items-center bg-blue-50 rounded-full px-4 py-2 shadow-sm hover:shadow transition"
-              >
-                <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold mr-2">
-                  {payer.name.charAt(0)}
-                </div>
-                <div>
-                  <div className="font-medium">{payer.name}</div>
-                  <div className="text-sm text-gray-600">
-                    ${payer.spentMoney}
+            {payers?.length ? (
+              payers?.map((payer, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center bg-blue-50 rounded-full px-4 py-2 shadow-sm hover:shadow transition"
+                >
+                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold mr-2">
+                    {getUserDetailById(payer.userId)?.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="font-medium">
+                      {getUserDetailById(payer.userId)?.name}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {payer.spentMoney}$
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="text-center text-gray-500">No payers yet</div>
+            )}
           </div>
         </div>
 
@@ -393,35 +193,40 @@ export default function TripDetail() {
             Participants
           </h3>
           <div className="flex flex-wrap gap-3">
-            {participantsWithTotals.map((participant, idx) => (
+            {participants?.map((participant, idx) => (
               <div
                 key={idx}
                 className="flex items-center bg-gray-50 rounded-full px-4 py-2 shadow-sm hover:shadow transition"
               >
                 <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center text-white font-bold mr-2">
-                  {participant.name.charAt(0)}
+                  {getUserById(participant.userId)?.name.charAt(0)}
                 </div>
                 <div>
-                  <div className="font-medium">{participant.name}</div>
+                  <div className="font-medium">
+                    {getUserById(participant.userId)?.name}
+                  </div>
                   <div className="text-sm">
-                    <span className="text-gray-600">
-                      Chi phí: ${participant.totalToPay.toFixed(2)}
+                    {/* <span
+                      className={
+                        participant.remainingToPay > 0
+                          ? "text-red-500"
+                          : "text-green-500"
+                      }
+                    >
+                      {participant.totalMoneyPerUser.toFixed(2)}$
                     </span>
                     <br />
                     {participant.remainingToPay > 0 && (
                       <span className="text-red-500">
-                        Cần trả: ${participant.remainingToPay.toFixed(2)}
+                        need to pay: ${participant.remainingToPay.toFixed(2)}
                       </span>
                     )}
                     {participant.remainingToPay < 0 && (
                       <span className="text-green-500">
-                        Nhận lại: $
-                        {Math.abs(participant.remainingToPay).toFixed(2)}
+                        need to refunded:
+                        {Math.abs(participant.remainingToPay).toFixed(2)} $
                       </span>
-                    )}
-                    {Math.abs(participant.remainingToPay) < 0.01 && (
-                      <span className="text-gray-500">Đã thanh toán</span>
-                    )}
+                    )} */}
                   </div>
                 </div>
               </div>
@@ -433,44 +238,43 @@ export default function TripDetail() {
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <h3 className="text-lg font-semibold mb-3 border-b pb-2">Activities</h3>
         <ul className="divide-y">
-          {activities.map((activity) => {
-            const payer = users.find((u) => u.id === activity.payerId);
-            console.log("🚀 ~ payer:", payer);
-            return (
-              <li key={activity.id} className="py-2">
-                <Link
-                  href={`/activity/${activity.id}`}
-                  className="block hover:bg-gray-50 rounded p-3 transition"
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className="font-medium">{activity.name}</span> -
-                      <span className="text-gray-600">
-                        {payer?.name || "Unknown"}
-                      </span>
+          {activities?.length ? (
+            activities?.map((activity: TripActivity) => {
+              const payer = users.find((u) => u.id === activity.payerId);
+              return (
+                <li key={activity.id} className="py-2">
+                  <Link
+                    href={`/activity/${activity.id}`}
+                    className="block hover:bg-gray-50 rounded p-3 transition"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex flex-col">
+                        <span className="font-bold">{activity.name}</span>
+                        <span className="text-gray-600">
+                          payer:{" "}
+                          <span className="font-semibold">
+                            {payer?.name || "Unknown"}
+                          </span>
+                        </span>
+                      </div>
+                      <div className="font-semibold">
+                        ${activity.totalMoney}
+                      </div>
                     </div>
-                    <div className="font-semibold">${activity.totalMoney}</div>
-                  </div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    {new Date(activity.time).toLocaleTimeString("en-GB", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: false,
-                    })}{" "}
-                    {new Date(activity.time).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
+                    <div className="text-sm text-gray-500 mt-1">
+                      {Utility.formatDate(activity.updatedAt)}
+                    </div>
+                  </Link>
+                </li>
+              );
+            })
+          ) : (
+            <div className="text-gray-500">No activities yet</div>
+          )}
         </ul>
       </div>
 
-      {showPaymentForm && (
+      {/* {showPaymentForm && (
         <div className="mt-6 bg-white rounded-lg shadow p-6">
           <form onSubmit={handlePaymentSubmit} className="space-y-4">
             <h3 className="font-bold text-lg border-b pb-2">Collect Payment</h3>
@@ -620,7 +424,6 @@ export default function TripDetail() {
         </div>
       )}
 
-      {/* Warning modal remains unchanged */}
       {showWarning && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg max-w-md w-full">
@@ -672,7 +475,7 @@ export default function TripDetail() {
             </div>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

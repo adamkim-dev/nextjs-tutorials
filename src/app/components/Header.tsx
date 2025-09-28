@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
+import Link from "next/link";
 
 export default function Header() {
   return (
@@ -9,18 +9,11 @@ export default function Header() {
         <div className="flex justify-between h-16 items-center">
           <div className="flex-shrink-0">
             <Link href="/" className="font-bold text-xl">
-              Splitmate
+              Split mate
             </Link>
           </div>
-          
-          <nav className="flex space-x-4">
-            <Link href="/" className="px-3 py-2 rounded-md hover:bg-gray-100">
-              Home
-            </Link>
-            <Link href="/create-trip" className="px-3 py-2 rounded-md hover:bg-gray-100">
-              Create Trip
-            </Link>
-          </nav>
+
+          <nav className="flex space-x-4"></nav>
         </div>
       </div>
     </header>

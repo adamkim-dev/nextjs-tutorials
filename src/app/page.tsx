@@ -1,79 +1,214 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import useTrips from "./hooks/useTrips";
+
+const FeatureCard = ({
+  icon,
+  title,
+  description,
+  bgColor,
+}: {
+  icon: string;
+  title: string;
+  description: string;
+  bgColor: string;
+}) => (
+  <div className={`text-center p-6 ${bgColor} rounded-xl`}>
+    <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+      <span className="text-white text-2xl font-bold">{icon}</span>
+    </div>
+    <h3 className="text-xl font-semibold text-gray-900 mb-2">{title}</h3>
+    <p className="text-gray-600">{description}</p>
+  </div>
+);
+
+const StepCard = ({
+  number,
+  title,
+  description,
+}: {
+  number: number;
+  title: string;
+  description: string;
+}) => (
+  <div className="text-center">
+    <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold text-xl">
+      {number}
+    </div>
+    <h3 className="text-xl font-semibold text-gray-900 mb-2">{title}</h3>
+    <p className="text-gray-600">{description}</p>
+  </div>
+);
+
+const StatCard = ({ value, label }: { value: string; label: string }) => (
+  <div>
+    <div className="text-3xl md:text-4xl font-bold mb-2">{value}</div>
+    <div className="text-blue-200">{label}</div>
+  </div>
+);
 
 export default function Home() {
-  const [loading, setLoading] = useState(true);
+  const features = [
+    {
+      icon: "💰",
+      title: "Expense Sharing",
+      description:
+        "Easily split trip costs, activities, and shared purchases with friends",
+      bgColor: "bg-blue-50",
+    },
+    {
+      icon: "📊",
+      title: "Detailed Reports",
+      description:
+        "Track and analyze expenses with visual and easy-to-understand reports",
+      bgColor: "bg-green-50",
+    },
+    {
+      icon: "👥",
+      title: "Group Management",
+      description:
+        "Create and manage multiple groups for different trips or activities",
+      bgColor: "bg-purple-50",
+    },
+  ];
 
-  const { data: trips, isLoading, isError, error } = useTrips();
+  const steps = [
+    {
+      number: 1,
+      title: "Create Trip",
+      description: "Create a new trip and add participating members",
+    },
+    {
+      number: 2,
+      title: "Add Expenses",
+      description: "Add expenses and allocate them to specific members",
+    },
+    {
+      number: 3,
+      title: "Track & Settle",
+      description: "Monitor balances and easily settle payments",
+    },
+  ];
 
-  useEffect(() => {
-    if (!isLoading) {
-      setLoading(false);
-    }
-  }, [isLoading]);
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (isError) {
-    return <div>Error: {error}</div>;
-  }
-
-  // Lấy 5 chuyến đi gần nhất
-  const recentTrips = trips.slice(0, 5);
+  const stats = [
+    { value: "1000+", label: "Users" },
+    { value: "500+", label: "Trips" },
+    { value: "$50K+", label: "Expenses" },
+    { value: "99%", label: "Satisfaction" },
+  ];
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">Recent Trips</h1>
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+              Splitmate
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
+              Smart group expense management app - Share costs easily and
+              transparently
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link
+                href="/trips"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors duration-200 shadow-lg"
+              >
+                Get Started
+              </Link>
+              <Link
+                href="/login"
+                className="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors duration-200"
+              >
+                Sign In
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Key Features
+            </h2>
+            <p className="text-xl text-gray-600">
+              Everything you need for effective group expense management
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <FeatureCard
+                key={index}
+                icon={feature.icon}
+                title={feature.title}
+                description={feature.description}
+                bgColor={feature.bgColor}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-gray-50 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              How It Works
+            </h2>
+            <p className="text-xl text-gray-600">
+              Just 3 simple steps to get started
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {steps.map((step, index) => (
+              <StepCard
+                key={index}
+                number={step.number}
+                title={step.title}
+                description={step.description}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-blue-600 py-16 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {stats.map((stat, index) => (
+              <StatCard key={index} value={stat.value} label={stat.label} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+            Ready to Start?
+          </h2>
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            Join thousands of users managing group expenses effectively
+          </p>
           <Link
             href="/trips"
-            className="text-blue-500 hover:underline text-lg"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors duration-200 shadow-lg inline-block"
           >
-            View All Trips
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recentTrips.length > 0 ? (
-            recentTrips.map((trip) => (
-              <div key={trip.id} className="border p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                <h2 className="text-xl font-semibold">{trip.name}</h2>
-                <p>Date: {trip.date}</p>
-                <p>Total: ${trip.totalMoney}</p>
-                <Link
-                  href={`/trips/${trip.id}`}
-                  className="text-blue-500 hover:underline"
-                >
-                  View Details
-                </Link>
-              </div>
-            ))
-          ) : (
-            <p>No trips found. Create your first trip!</p>
-          )}
-        </div>
-
-        <div className="mt-8 flex space-x-4">
-          <Link
-            href="/create-trip"
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            Create New Trip
-          </Link>
-          <Link
-            href="/trips"
-            className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
-          >
-            Go to My Trips
+            Create Your First Trip
           </Link>
         </div>
       </div>
+
+      <footer className="bg-gray-900 text-white py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p>&copy; 2024 Splitmate. All rights reserved.</p>
+        </div>
+      </footer>
     </main>
   );
 }

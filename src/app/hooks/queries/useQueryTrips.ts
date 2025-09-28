@@ -8,7 +8,6 @@ const useQueryTrips = () => {
       tripService
         .fetchAllTrips()
         .then((res) => {
-          console.log("🚀 ~ useQueryTrips ~ res:", res);
           return res.data ?? [];
         })
         .catch(() => []),

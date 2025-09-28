@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SplitSBClient } from "../utils/supabase/SplitSBClient";
-import { Activity } from "../models";
+import { Activity, NewActivityPayload } from "../models";
 import { IBaseResponse } from "../model/common.model";
 
 export class ActivityService extends SplitSBClient {
@@ -54,7 +54,7 @@ export class ActivityService extends SplitSBClient {
         .select(
           `
         *,
-        activity_participants(*) 
+        activity_participants(id,user_id, total_money_per_user) 
       `
         )
         .eq("id", id)
@@ -63,18 +63,10 @@ export class ActivityService extends SplitSBClient {
       if (error) {
         return { data: null, error: error };
       }
-
-      // Chuyển đổi dữ liệu từ snake_case sang camelCase
-      // và cấu trúc lại dữ liệu để phù hợp với model Activity
-      const formattedData = {
-        ...this.toCamelCase(data),
-        participants: data.activity_participants
-          ? this.toCamelCase(data.activity_participants)
-          : [],
-      };
+      console.log("🚀 ~ ActivityService ~ data:", this.toCamelCase(data));
 
       return {
-        data: formattedData,
+        data: this.toCamelCase(data),
         error: null,
       };
     } catch (error: any) {
@@ -83,7 +75,7 @@ export class ActivityService extends SplitSBClient {
   };
 
   createActivity = async (
-    activity: Omit<Activity, "id">
+    activity: NewActivityPayload
   ): Promise<IBaseResponse<Activity>> => {
     try {
       const { participants, ...activityData } = activity;
@@ -91,12 +83,10 @@ export class ActivityService extends SplitSBClient {
       const snakeCaseActivityData = {
         trip_id: activityData.tripId,
         name: activityData.name,
-        time: activityData.time,
         total_money: activityData.totalMoney || 0,
         payer_id: activityData.payerId,
       };
 
-      // Tạo activity trước
       const { data, error } = await this.client
         .from("activities")
         .insert(snakeCaseActivityData)
@@ -110,7 +100,7 @@ export class ActivityService extends SplitSBClient {
       if (participants && participants.length > 0) {
         const activityParticipants = participants.map((p) => ({
           activity_id: data.id,
-          user_id: p.userId,
+          user_id: p.id,
           total_money_per_user: p.totalMoneyPerUser || 0,
         }));
 
@@ -120,6 +110,103 @@ export class ActivityService extends SplitSBClient {
 
         if (participantsError) {
           console.error("Error adding participants:", participantsError);
+        }
+
+        // Update trip_participants table with new money amounts
+        for (const participant of participants) {
+          // Get current participant data
+          const { data: currentParticipant, error: fetchError } =
+            await this.client
+              .from("trip_participants")
+              .select("*")
+              .eq("trip_id", activityData.tripId)
+              .eq("user_id", participant.id);
+
+          if (fetchError) {
+            console.error("Error fetching trip participant:", fetchError);
+            continue;
+          }
+
+          if (currentParticipant && currentParticipant.length > 0) {
+            // Update total_money_per_user for existing participant
+            const updatedTotalMoneyPerUser =
+              (currentParticipant[0].total_money_per_user || 0) +
+              (participant.totalMoneyPerUser || 0);
+
+            const { error: updateError } = await this.client
+              .from("trip_participants")
+              .update({
+                total_money_per_user: updatedTotalMoneyPerUser,
+              })
+              .eq("trip_id", activityData.tripId)
+              .eq("user_id", participant.id);
+
+            if (updateError) {
+              console.error("Error updating trip participant:", updateError);
+            }
+          } else {
+            // Create new trip participant entry if not exists
+            const { error: insertError } = await this.client
+              .from("trip_participants")
+              .insert({
+                trip_id: activityData.tripId,
+                user_id: participant.id,
+                total_money_per_user: participant.totalMoneyPerUser || 0,
+                is_paid: false,
+                paid_amount: 0,
+              });
+
+            if (insertError) {
+              console.error("Error inserting trip participant:", insertError);
+            }
+          }
+        }
+      }
+
+      // Update trip_payers table
+      if (activityData.payerId) {
+        // Check if payer already exists in trip_payers
+        const { data: existingPayers, error: payerFetchError } =
+          await this.client
+            .from("trip_payers")
+            .select("*")
+            .eq("trip_id", activityData.tripId)
+            .eq("user_id", activityData.payerId);
+
+        if (payerFetchError) {
+          console.error("Error fetching trip payer:", payerFetchError);
+        }
+
+        if (existingPayers && existingPayers.length > 0) {
+          // Update existing payer
+          const updatedSpentMoney =
+            (existingPayers[0].spent_money || 0) +
+            (activityData.totalMoney || 0);
+
+          const { error: updatePayerError } = await this.client
+            .from("trip_payers")
+            .update({
+              spent_money: updatedSpentMoney,
+            })
+            .eq("trip_id", activityData.tripId)
+            .eq("user_id", activityData.payerId);
+
+          if (updatePayerError) {
+            console.error("Error updating trip payer:", updatePayerError);
+          }
+        } else {
+          // Create new payer entry
+          const { error: insertPayerError } = await this.client
+            .from("trip_payers")
+            .insert({
+              trip_id: activityData.tripId,
+              user_id: activityData.payerId,
+              spent_money: activityData.totalMoney || 0,
+            });
+
+          if (insertPayerError) {
+            console.error("Error inserting trip payer:", insertPayerError);
+          }
         }
       }
 
@@ -137,16 +224,12 @@ export class ActivityService extends SplitSBClient {
     activity: Partial<Activity>
   ): Promise<IBaseResponse<Activity>> => {
     try {
-      // Tách participants ra khỏi activity object nếu có
-      const { participants, ...activityData } = activity;
+      const { activityParticipants, ...activityData } = activity;
 
-      // Chuyển đổi các trường camelCase sang snake_case
       const snakeCaseActivityData: any = {};
 
       if (activityData.name !== undefined)
         snakeCaseActivityData.name = activityData.name;
-      if (activityData.time !== undefined)
-        snakeCaseActivityData.time = activityData.time;
       if (activityData.totalMoney !== undefined)
         snakeCaseActivityData.total_money = activityData.totalMoney;
       if (activityData.payerId !== undefined)
@@ -154,7 +237,6 @@ export class ActivityService extends SplitSBClient {
       if (activityData.tripId !== undefined)
         snakeCaseActivityData.trip_id = activityData.tripId;
 
-      // Cập nhật activity
       const { data, error } = await this.client
         .from("activities")
         .update(snakeCaseActivityData)
@@ -166,9 +248,7 @@ export class ActivityService extends SplitSBClient {
         return { data: null, error: error };
       }
 
-      // Nếu có participants, cập nhật bảng activity_participants
-      if (participants && participants.length > 0) {
-        // Xóa tất cả participants cũ
+      if (activityParticipants && activityParticipants.length > 0) {
         const { error: deleteError } = await this.client
           .from("activity_participants")
           .delete()
@@ -176,19 +256,17 @@ export class ActivityService extends SplitSBClient {
 
         if (deleteError) {
           console.error("Error deleting old participants:", deleteError);
-          // Tiếp tục xử lý mặc dù có lỗi
         }
 
-        // Thêm participants mới
-        const activityParticipants = participants.map((p) => ({
+        const newActivityParticipants = activityParticipants.map((p) => ({
           activity_id: id,
-          user_id: p.userId,
+          user_id: p.id,
           total_money_per_user: p.totalMoneyPerUser || 0,
         }));
 
         const { error: participantsError } = await this.client
           .from("activity_participants")
-          .insert(activityParticipants);
+          .insert(newActivityParticipants);
 
         if (participantsError) {
           console.error("Error adding participants:", participantsError);
