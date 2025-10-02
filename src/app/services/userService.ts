@@ -22,12 +22,28 @@ export class UserService extends SplitSBClient {
         email: user.email,
         phoneNumber: user.phone_number || "",
         spentMoney: 0,
+        salary: user.salary ?? undefined,
+        dailyAllowance: user.daily_allowance ?? undefined,
+        payday: user.payday ?? undefined,
       }));
 
       return {
         data: users,
         error: null,
       };
+    } catch (error: any) {
+      return { data: null, error };
+    }
+  };
+
+  fetchAllUsersWithFinance = async (): Promise<IBaseResponse<any[]>> => {
+    try {
+      const res = await fetch('/api/users/with-finance', { cache: 'no-store' });
+      const json = await res.json();
+      if (!res.ok) {
+        return { data: null, error: json?.error || new Error('Failed to fetch users with finance') };
+      }
+      return { data: json.data, error: null };
     } catch (error: any) {
       return { data: null, error };
     }

@@ -13,7 +13,20 @@ export default function Header() {
             </Link>
           </div>
 
-          <nav className="flex space-x-4"></nav>
+          <nav className="flex space-x-4">
+            <Link
+              href="/trips"
+              className="text-gray-600 font-bold text-lg hover:text-gray-900 px-3 py-2 rounded-md transition-colors"
+            >
+              Trips
+            </Link>
+            <Link
+              href="/saving-planner"
+              className="text-gray-600 font-bold text-lg hover:text-gray-900 px-3 py-2 rounded-md transition-colors"
+            >
+              Saving Planner
+            </Link>
+          </nav>
         </div>
       </div>
     </header>
