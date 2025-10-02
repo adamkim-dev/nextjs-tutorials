@@ -1,4 +1,6 @@
+"use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { Utility } from "@/app/utils";
 import { DailySpendingLog, SavingPlannerSummary } from "../../models";
 
 type Props = {
@@ -10,6 +12,7 @@ type Props = {
   summary?: SavingPlannerSummary;
   requireAuth: () => boolean;
   userId: string;
+  customDailyBudget?: number;
 };
 
 export default function DailySpendingTab({
@@ -21,6 +24,7 @@ export default function DailySpendingTab({
   summary,
   requireAuth,
   userId,
+  customDailyBudget,
 }: Props) {
   const isPast = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -90,7 +94,9 @@ export default function DailySpendingTab({
                 className="flex justify-between items-center py-2 border-b"
               >
                 <span>{log.date}</span>
-                <span className="font-bold">${log.amountSpent.toFixed(2)}</span>
+                <span className="font-bold">
+                  ${Utility.formatMoney(log.amountSpent)}
+                </span>
               </div>
             ))}
           </div>
@@ -123,7 +129,10 @@ export default function DailySpendingTab({
             );
             cells.push({ dateStr, amount: log ? log.amountSpent : 0 });
           }
-          const budget = summary?.dailyAllowance ?? 0;
+          const budget =
+            typeof customDailyBudget === "number" && customDailyBudget >= 0
+              ? customDailyBudget
+              : summary?.dailyAllowance ?? 0;
 
           return (
             <div className="grid grid-cols-7 gap-2">
@@ -145,13 +154,13 @@ export default function DailySpendingTab({
                       <div className="flex items-center justify-between">
                         <span className="text-gray-500">Budget:</span>
                         <span className="font-semibold">
-                          ${budget.toFixed(2)}
+                          ${Utility.formatMoney(budget)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between mt-1">
                         <span className="text-gray-500">Spent:</span>
                         <span className="font-semibold">
-                          ${(cell.amount || 0).toFixed(2)}
+                          ${Utility.formatMoney(cell.amount || 0)}
                         </span>
                       </div>
                     </div>

@@ -47,9 +47,30 @@ import DebtsTab from "./tabs/DebtsTab";
 import LoansTab from "./tabs/LoansTab";
 import SavingPlansTab from "./tabs/SavingPlansTab";
 import DailySpendingTab from "./tabs/DailySpendingTab";
+import SetupWizard from "./components/SetupWizard";
+import { Utility } from "../utils";
 
-// Fallback UUID to avoid invalid UUID errors before auth loads
 const DEFAULT_USER_ID = "550e8400-e29b-41d4-a716-406655440001";
+
+type SetupFixedExpense = { name: string; amount: number };
+type SetupDebt = {
+  creditor: string;
+  amountRemaining: number;
+  monthlyPayment: number;
+};
+type SetupLoan = {
+  borrower: string;
+  amountRemaining: number;
+  monthlyCollect: number;
+};
+type SetupPayload = {
+  selectedUserId?: string;
+  salary?: number;
+  payday?: number;
+  fixedExpenses?: SetupFixedExpense[];
+  debts?: SetupDebt[];
+  loans?: SetupLoan[];
+};
 
 export default function SavingPlannerPage() {
   const { data: reduxUsers } = useUsers();
@@ -77,6 +98,7 @@ export default function SavingPlannerPage() {
   const [newPlanPercentage, setNewPlanPercentage] = useState("");
   const [newPlanFixedAmount, setNewPlanFixedAmount] = useState("");
   const [userId, setUserId] = useState<string>(DEFAULT_USER_ID);
+  const [dailyBudgetX, setDailyBudgetX] = useState<number | null>(null);
   // Authentication is bypassed; we will use Redux-selected user only
 
   // Initialize from Redux users only
@@ -132,6 +154,120 @@ export default function SavingPlannerPage() {
   const upsertDailyLog = useUpsertDailyLog();
   const updateUserSalary = useUpdateUserSalary();
   const recalculateDailyAllowance = useRecalculateDailyAllowance();
+
+  // Apply setup from wizard: persist to backend and refresh
+  const applySetup = async (setup: SetupPayload) => {
+    const targetUserId = setup?.selectedUserId || userId;
+    if (!targetUserId || targetUserId === DEFAULT_USER_ID) {
+      alert("Vui lòng chọn người dùng hợp lệ trong bước 1.");
+      return;
+    }
+    // switch view/user to target
+    setUserId(targetUserId);
+
+    try {
+      // Salary
+      if (typeof setup?.salary === "number" && setup.salary >= 0) {
+        await updateUserSalary.mutateAsync({
+          userId: targetUserId,
+          payload: { salary: setup.salary },
+        });
+      }
+
+      // Payday
+      if (
+        typeof setup?.payday === "number" &&
+        setup.payday >= 1 &&
+        setup.payday <= 31
+      ) {
+        const res = await fetch(
+          `/api/saving-planner/update-payday?userId=${targetUserId}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ payday: setup.payday }),
+          }
+        );
+        if (!res.ok) {
+          const json = await res.json().catch(() => ({}));
+          throw new Error(json?.error || "Cập nhật payday thất bại");
+        }
+      }
+
+      // Fixed expenses
+      if (Array.isArray(setup?.fixedExpenses)) {
+        await Promise.all(
+          setup.fixedExpenses.map(async (e) => {
+            if (e?.name && typeof e?.amount === "number" && e.amount >= 0) {
+              await createFixedExpense.mutateAsync({
+                userId: targetUserId,
+                payload: {
+                  name: e.name,
+                  amount: e.amount,
+                  frequency: "monthly",
+                },
+              });
+            }
+          })
+        );
+      }
+
+      // Debts
+      if (Array.isArray(setup?.debts)) {
+        await Promise.all(
+          setup.debts.map(async (d) => {
+            if (
+              d?.creditor &&
+              typeof d?.amountRemaining === "number" &&
+              d.amountRemaining >= 0 &&
+              typeof d?.monthlyPayment === "number" &&
+              d.monthlyPayment >= 0
+            ) {
+              await createDebt.mutateAsync({
+                userId: targetUserId,
+                payload: {
+                  creditor: d.creditor,
+                  amountRemaining: d.amountRemaining,
+                  monthlyPayment: d.monthlyPayment,
+                },
+              });
+            }
+          })
+        );
+      }
+
+      // Loans
+      if (Array.isArray(setup?.loans)) {
+        await Promise.all(
+          setup.loans.map(async (l) => {
+            if (
+              l?.borrower &&
+              typeof l?.amountRemaining === "number" &&
+              l.amountRemaining >= 0 &&
+              typeof l?.monthlyCollect === "number" &&
+              l.monthlyCollect >= 0
+            ) {
+              await createLoan.mutateAsync({
+                userId: targetUserId,
+                payload: {
+                  borrower: l.borrower,
+                  amountRemaining: l.amountRemaining,
+                  monthlyCollect: l.monthlyCollect,
+                },
+              });
+            }
+          })
+        );
+      }
+
+      // Recalculate allowance and show Overview
+      await recalculateDailyAllowance.mutateAsync({ userId: targetUserId });
+      setActiveTab("overview");
+      alert("Đã lưu và áp dụng thiết lập. Dữ liệu sẽ hiển thị ở các tab.");
+    } catch (e) {
+      alert((e as Error).message);
+    }
+  };
 
   const tabs = [
     { id: "overview", label: "Overview", icon: "📊" },
@@ -202,7 +338,7 @@ export default function SavingPlannerPage() {
             Monthly Loan Income
           </div>
           <div className="text-2xl font-bold text-blue-900">
-            ${summary?.totalMonthlyLoanIncome?.toFixed(2) || "0.00"}
+            ${Utility.formatMoney(summary?.totalMonthlyLoanIncome ?? 0)}
           </div>
         </div>
 
@@ -211,7 +347,7 @@ export default function SavingPlannerPage() {
             Daily Allowance
           </div>
           <div className="text-2xl font-bold text-green-900">
-            ${summary?.dailyAllowance?.toFixed(2) || "0.00"}
+            ${Utility.formatMoney(summary?.dailyAllowance ?? 0)}
           </div>
         </div>
 
@@ -220,7 +356,7 @@ export default function SavingPlannerPage() {
             Total Fixed Expenses
           </div>
           <div className="text-2xl font-bold text-red-900">
-            ${summary?.totalFixedExpenses?.toFixed(2) || "0.00"}
+            ${Utility.formatMoney(summary?.totalFixedExpenses ?? 0)}
           </div>
         </div>
 
@@ -229,57 +365,12 @@ export default function SavingPlannerPage() {
             Total Monthly Saving Plan
           </div>
           <div className="text-2xl font-bold text-purple-900">
-            ${summary?.totalMonthlySavingPlan?.toFixed(2) || "0.00"}
+            ${Utility.formatMoney(summary?.totalMonthlySavingPlan ?? 0)}
           </div>
         </div>
       </div>
 
-      {/* Salary Setup */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Salary Setup</h3>
-        <div className="flex items-center space-x-4">
-          <input
-            type="number"
-            placeholder="Enter monthly salary"
-            className="flex-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            value={salaryInput}
-            onChange={(e) => setSalaryInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                submitSalary();
-              }
-            }}
-          />
-          <button
-            onClick={handleRecalculateAllowance}
-            className="bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            Recalculate Allowance
-          </button>
-        </div>
-
-        {/* Payday Setup */}
-        <div className="mt-4 flex items-center space-x-4">
-          <input
-            type="number"
-            placeholder="Enter payday (1-31)"
-            className="w-60 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            value={paydayInput}
-            onChange={(e) => setPaydayInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                submitPayday();
-              }
-            }}
-          />
-          <button
-            onClick={submitPayday}
-            className="bg-green-500 text-white px-4 py-3 rounded-lg hover:bg-green-600 transition-colors"
-          >
-            Save Payday
-          </button>
-        </div>
-      </div>
+      {/* Budget X control is now handled inside OverviewTab. Legacy Salary/Payday setup removed. */}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -288,12 +379,12 @@ export default function SavingPlannerPage() {
           <div className="text-2xl font-bold text-red-600">{debts.length}</div>
           <div className="text-sm text-gray-500">
             Total: $
-            {debts
-              .reduce(
+            {Utility.formatMoney(
+              debts.reduce(
                 (sum: number, debt: Debt) => sum + debt.amountRemaining,
                 0
               )
-              .toFixed(2)}
+            )}
           </div>
         </div>
 
@@ -304,12 +395,12 @@ export default function SavingPlannerPage() {
           </div>
           <div className="text-sm text-gray-500">
             Total: $
-            {loans
-              .reduce(
+            {Utility.formatMoney(
+              loans.reduce(
                 (sum: number, loan: Loan) => sum + loan.amountRemaining,
                 0
               )
-              .toFixed(2)}
+            )}
           </div>
         </div>
 
@@ -393,7 +484,7 @@ export default function SavingPlannerPage() {
             <div>
               <h4 className="font-semibold">{expense.name}</h4>
               <p className="text-lg font-bold text-red-600">
-                ${expense.amount.toFixed(2)}/month
+                ${Utility.formatMoney(expense.amount)}/month
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -526,10 +617,10 @@ export default function SavingPlannerPage() {
             <div>
               <h4 className="font-semibold">{debt.creditor}</h4>
               <p className="text-lg font-bold text-red-600">
-                ${debt.amountRemaining.toFixed(2)} remaining
+                ${Utility.formatMoney(debt.amountRemaining)} remaining
               </p>
               <p className="text-sm text-gray-600">
-                ${debt.monthlyPayment.toFixed(2)}/month
+                ${Utility.formatMoney(debt.monthlyPayment)}/month
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -657,10 +748,10 @@ export default function SavingPlannerPage() {
             <div>
               <h4 className="font-semibold">{loan.borrower}</h4>
               <p className="text-lg font-bold text-green-600">
-                ${loan.amountRemaining.toFixed(2)} remaining
+                ${Utility.formatMoney(loan.amountRemaining)} remaining
               </p>
               <p className="text-sm text-gray-600">
-                ${loan.monthlyCollect.toFixed(2)}/month
+                ${Utility.formatMoney(loan.monthlyCollect)}/month
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -836,7 +927,7 @@ export default function SavingPlannerPage() {
                 </p>
               ) : (
                 <p className="text-lg font-bold text-purple-600">
-                  ${plan.fixedAmount?.toFixed(2)}/month
+                  ${Utility.formatMoney(plan.fixedAmount ?? 0)}/month
                 </p>
               )}
             </div>
@@ -976,7 +1067,9 @@ export default function SavingPlannerPage() {
                 className="flex justify-between items-center py-2 border-b"
               >
                 <span>{log.date}</span>
-                <span className="font-bold">${log.amountSpent.toFixed(2)}</span>
+                <span className="font-bold">
+                  ${Utility.formatMoney(log.amountSpent)}
+                </span>
               </div>
             ))}
           </div>
@@ -1049,10 +1142,10 @@ export default function SavingPlannerPage() {
                             : "mt-1 text-sm font-semibold text-green-600"
                         }
                       >
-                        ${cell.amount?.toFixed(2)}
+                        ${Utility.formatMoney(cell.amount ?? 0)}
                       </div>
                       <div className="mt-1 text-xs text-gray-500">
-                        Recommend: ${budget.toFixed(2)}
+                        Recommend: ${Utility.formatMoney(budget)}
                       </div>
                       <div className="mt-2 flex gap-2">
                         <button
@@ -1114,13 +1207,9 @@ export default function SavingPlannerPage() {
             debts={debts}
             loans={loans}
             savingPlans={savingPlans}
-            salaryInput={salaryInput}
-            setSalaryInput={setSalaryInput}
-            submitSalary={submitSalary}
-            paydayInput={paydayInput}
-            setPaydayInput={setPaydayInput}
-            submitPayday={submitPayday}
-            handleRecalculateAllowance={handleRecalculateAllowance}
+            userId={userId}
+            dailyBudgetX={dailyBudgetX}
+            setDailyBudgetX={setDailyBudgetX}
           />
         );
       case "expenses":
@@ -1202,6 +1291,7 @@ export default function SavingPlannerPage() {
             summary={summary ?? undefined}
             requireAuth={requireAuth}
             userId={userId}
+            customDailyBudget={dailyBudgetX ?? undefined}
           />
         );
       default:
@@ -1211,13 +1301,9 @@ export default function SavingPlannerPage() {
             debts={debts}
             loans={loans}
             savingPlans={savingPlans}
-            salaryInput={salaryInput}
-            setSalaryInput={setSalaryInput}
-            submitSalary={submitSalary}
-            paydayInput={paydayInput}
-            setPaydayInput={setPaydayInput}
-            submitPayday={submitPayday}
-            handleRecalculateAllowance={handleRecalculateAllowance}
+            userId={userId}
+            dailyBudgetX={dailyBudgetX}
+            setDailyBudgetX={setDailyBudgetX}
           />
         );
     }
@@ -1256,6 +1342,14 @@ export default function SavingPlannerPage() {
             )}
           </div>
         </div>
+
+        {/* Setup Wizard */}
+        <SetupWizard
+          onApplySetup={applySetup}
+          onUserSelect={(id) => setUserId(id || "")}
+          currentUserId={hasValidUser ? userId : undefined}
+          currentSummary={summary ?? undefined}
+        />
 
         {/* Tabs */}
         <div className="mb-8">

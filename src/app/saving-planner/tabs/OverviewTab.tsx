@@ -1,17 +1,15 @@
 import { Debt, Loan, SavingPlan, SavingPlannerSummary } from "../../models";
+import useUsers from "../../hooks/useUsers";
+import { Utility } from "../../utils";
 
 type Props = {
   summary?: SavingPlannerSummary;
   debts: Debt[];
   loans: Loan[];
   savingPlans: SavingPlan[];
-  salaryInput: string;
-  setSalaryInput: (v: string) => void;
-  submitSalary: () => void;
-  paydayInput: string;
-  setPaydayInput: (v: string) => void;
-  submitPayday: () => void;
-  handleRecalculateAllowance: () => void;
+  userId: string;
+  dailyBudgetX: number | null;
+  setDailyBudgetX: (v: number | null) => void;
 };
 
 export default function OverviewTab({
@@ -19,14 +17,46 @@ export default function OverviewTab({
   debts,
   loans,
   savingPlans,
-  salaryInput,
-  setSalaryInput,
-  submitSalary,
-  paydayInput,
-  setPaydayInput,
-  submitPayday,
-  handleRecalculateAllowance,
+  userId,
+  dailyBudgetX,
+  setDailyBudgetX,
 }: Props) {
+  const { getUserById } = useUsers();
+
+  const daysUntilNextPayday = () => {
+    const user = userId ? getUserById(userId) : undefined;
+    const payday = user?.payday;
+    if (!payday || payday < 1 || payday > 31) {
+      // fallback: số ngày còn lại trong tháng
+      const now = new Date();
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      return end.getDate() - now.getDate() + 1; // bao gồm hôm nay
+    }
+    const today = new Date();
+    const todayMid = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const thisPayday = new Date(today.getFullYear(), today.getMonth(), payday);
+    thisPayday.setHours(0, 0, 0, 0);
+    let next = thisPayday;
+    if (todayMid > thisPayday) {
+      next = new Date(today.getFullYear(), today.getMonth() + 1, payday);
+    }
+    const ms = next.getTime() - todayMid.getTime();
+    return Math.max(1, Math.ceil(ms / (1000 * 60 * 60 * 24)));
+  };
+
+  const cycleDays = daysUntilNextPayday();
+  const allowance = summary?.dailyAllowance ?? 0;
+  const savingPlanMonthly = summary?.totalMonthlySavingPlan ?? 0;
+  // Allowance đã trừ Saving Plan, nên khuyến nghị X = allowance
+  const recommendedX = Math.max(0, allowance);
+  const budgetX = dailyBudgetX ?? recommendedX;
+  // Tiết kiệm dự kiến = Saving Plan + phần dư nếu chi tiêu < allowance
+  const projectedSavings = savingPlanMonthly + Math.max(0, (allowance - budgetX) * cycleDays);
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
@@ -36,7 +66,7 @@ export default function OverviewTab({
             Monthly Loan Income
           </div>
           <div className="text-2xl font-bold text-blue-900">
-            ${summary?.totalMonthlyLoanIncome?.toFixed(2) || "0.00"}
+            ${Utility.formatMoney(summary?.totalMonthlyLoanIncome ?? 0)}
           </div>
         </div>
 
@@ -45,7 +75,7 @@ export default function OverviewTab({
             Daily Allowance
           </div>
           <div className="text-2xl font-bold text-green-900">
-            ${summary?.dailyAllowance?.toFixed(2) || "0.00"}
+            ${Utility.formatMoney(summary?.dailyAllowance ?? 0)}
           </div>
         </div>
 
@@ -54,7 +84,7 @@ export default function OverviewTab({
             Total Fixed Expenses
           </div>
           <div className="text-2xl font-bold text-red-900">
-            ${summary?.totalFixedExpenses?.toFixed(2) || "0.00"}
+            ${Utility.formatMoney(summary?.totalFixedExpenses ?? 0)}
           </div>
         </div>
 
@@ -63,85 +93,107 @@ export default function OverviewTab({
             Total Monthly Saving Plan
           </div>
           <div className="text-2xl font-bold text-purple-900">
-            ${summary?.totalMonthlySavingPlan?.toFixed(2) || "0.00"}
+            ${Utility.formatMoney(summary?.totalMonthlySavingPlan ?? 0)}
           </div>
         </div>
       </div>
 
-      {/* Salary Setup */}
+      {/* Điều khiển ngân sách và hiển thị tiết kiệm dự kiến */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Salary Setup</h3>
-        <div className="flex items-center space-x-4">
+        <h3 className="text-lg font-semibold mb-4">
+          Ngân sách mỗi ngày (X) & Tiết kiệm dự kiến
+        </h3>
+        <div className="flex items-center gap-4">
           <input
             type="number"
-            placeholder="Enter monthly salary"
-            className="flex-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            value={salaryInput}
-            onChange={(e) => setSalaryInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                submitSalary();
-              }
+            placeholder="Nhập X $/ngày"
+            className="w-60 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={budgetX || 0}
+            onChange={(e) => {
+              const v = e.target.value;
+              const num = v ? parseFloat(v) : 0;
+              setDailyBudgetX(Number.isFinite(num) ? Math.max(0, num) : 0);
             }}
           />
-          <button
-            onClick={handleRecalculateAllowance}
-            className="bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            Recalculate Allowance
-          </button>
+          <div className="text-sm text-gray-600">
+            Gợi ý hiện tại: ${Utility.formatMoney(recommendedX)}/ngày
+          </div>
         </div>
 
-        {/* Payday Setup */}
-        <div className="mt-4 flex items-center space-x-4">
-          <input
-            type="number"
-            placeholder="Enter payday (1-31)"
-            className="w-60 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            value={paydayInput}
-            onChange={(e) => setPaydayInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                submitPayday();
-              }
-            }}
-          />
-          <button
-            onClick={submitPayday}
-            className="bg-green-500 text-white px-4 py-3 rounded-lg hover:bg-green-600 transition-colors"
-          >
-            Save Payday
-          </button>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-green-50 rounded-lg p-4">
+            <div className="text-sm text-green-600 font-medium mb-1">
+              Số tiền hiện tại
+            </div>
+            <div className="text-2xl font-bold text-green-900">
+              ${Utility.formatMoney(summary?.remainingDailyBudget ?? 0)}
+            </div>
+            <div className="text-xs text-gray-600 mt-1">
+              Số dư còn lại đến kỳ lương (sau các khoản đã chi)
+            </div>
+          </div>
+          <div className="bg-purple-50 rounded-lg p-4">
+            <div className="text-sm text-purple-600 font-medium mb-1">
+              Tiết kiệm dự kiến đến kỳ lương
+            </div>
+            <div className="text-2xl font-bold text-purple-900">
+              ${Utility.formatMoney(projectedSavings)}
+            </div>
+            <div className="text-xs text-gray-600 mt-1">
+              X = ${Utility.formatMoney(budgetX)}$/ngày • còn {cycleDays} ngày
+            </div>
+          </div>
+          <div className="bg-blue-50 rounded-lg p-4">
+            <div className="text-sm text-blue-600 font-medium mb-1">
+              Chi tiêu tháng hiện tại
+            </div>
+            <div className="text-2xl font-bold text-blue-900">
+              ${Utility.formatMoney(summary?.currentMonthSpending ?? 0)}
+            </div>
+          </div>
+        </div>
+        <div className="text-xs text-gray-600 mt-2">
+          Chỉnh X sẽ cập nhật lịch chi tiêu và số tiền tiết kiệm dự kiến.
         </div>
       </div>
 
-      {/* Quick Stats */}
+      {/* Thống kê nhanh */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-lg shadow p-6">
           <h4 className="font-semibold text-gray-700 mb-2">Active Debts</h4>
           <div className="text-2xl font-bold text-red-600">{debts.length}</div>
           <div className="text-sm text-gray-500">
             Total: $
-            {debts
-              .reduce((sum: number, debt: Debt) => sum + debt.amountRemaining, 0)
-              .toFixed(2)}
+            {Utility.formatMoney(
+              debts.reduce(
+                (sum: number, debt: Debt) => sum + debt.amountRemaining,
+                0
+              )
+            )}
           </div>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
           <h4 className="font-semibold text-gray-700 mb-2">Active Loans</h4>
-          <div className="text-2xl font-bold text-green-600">{loans.length}</div>
+          <div className="text-2xl font-bold text-green-600">
+            {loans.length}
+          </div>
           <div className="text-sm text-gray-500">
             Total: $
-            {loans
-              .reduce((sum: number, loan: Loan) => sum + loan.amountRemaining, 0)
-              .toFixed(2)}
+            {Utility.formatMoney(
+              loans.reduce(
+                (sum: number, loan: Loan) => sum + loan.amountRemaining,
+                0
+              )
+            )}
           </div>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
           <h4 className="font-semibold text-gray-700 mb-2">Saving Plans</h4>
-          <div className="text-2xl font-bold text-purple-600">{savingPlans.length}</div>
+          <div className="text-2xl font-bold text-purple-600">
+            {savingPlans.length}
+          </div>
           <div className="text-sm text-gray-500">Active goals</div>
         </div>
       </div>

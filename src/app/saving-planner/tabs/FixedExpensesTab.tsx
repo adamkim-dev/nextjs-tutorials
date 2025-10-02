@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
+import { Utility } from "../../utils";
 import { FixedExpense } from "../../models";
 
 type Props = {
@@ -95,7 +95,7 @@ export default function FixedExpensesTab({
             <div>
               <h4 className="font-semibold">{expense.name}</h4>
               <p className="text-lg font-bold text-red-600">
-                ${expense.amount.toFixed(2)}/month
+                ${Utility.formatMoney(expense.amount)}/month
               </p>
             </div>
             <div className="flex items-center gap-3">

@@ -1,5 +1,7 @@
+"use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SavingPlan, SavingPlanType } from "../../models";
+import { Utility } from "../../utils";
 
 type Props = {
   savingPlans: SavingPlan[];
@@ -151,7 +153,7 @@ export default function SavingPlansTab({
                 </p>
               ) : (
                 <p className="text-lg font-bold text-purple-600">
-                  ${plan.fixedAmount?.toFixed(2)} / month
+                  ${Utility.formatMoney(plan.fixedAmount ?? 0)} / month
                 </p>
               )}
             </div>

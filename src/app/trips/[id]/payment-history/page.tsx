@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import tripService from "@/app/services/tripService";
 import paymentService from "@/app/services/paymentService";
 import useUsers from "@/app/hooks/useUsers";
+import { Utility } from "@/app/utils";
 
 export default function PaymentHistoryPage() {
   const { id } = useParams();
@@ -67,7 +68,7 @@ export default function PaymentHistoryPage() {
                       {user?.name || "Unknown"}
                     </span>
                   </div>
-                  <div className="font-bold">${payment.amount}</div>
+                  <div className="font-bold">${Utility.formatMoney(payment.amount)}</div>
                 </div>
                 <div className="text-sm text-gray-500">
                   {new Date(payment.paymentDate).toLocaleString()}

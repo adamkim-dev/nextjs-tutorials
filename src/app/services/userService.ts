@@ -67,6 +67,9 @@ export class UserService extends SplitSBClient {
         email: data.email,
         phoneNumber: data.phone_number || "",
         spentMoney: 0,
+        salary: data.salary ?? undefined,
+        dailyAllowance: data.daily_allowance ?? undefined,
+        payday: data.payday ?? undefined,
       };
 
       return {

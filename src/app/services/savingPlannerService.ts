@@ -44,28 +44,39 @@ export class SavingPlannerService extends SplitSBClient {
     try {
       // Get user's salary
       const userResponse = await userService.fetchUserById(userId);
-      if (userResponse.error || !userResponse.data?.salary) {
-        return { data: 0, error: userResponse.error || new Error("User salary not found") };
+      if (userResponse.error) {
+        return { data: null, error: userResponse.error };
+      }
+      const rawSalary = userResponse.data?.salary;
+      if (rawSalary === undefined || rawSalary === null) {
+        return { data: null, error: new Error("User salary not found") };
       }
 
-      const salary = userResponse.data.salary;
+      const salary = Number(rawSalary) || 0;
 
       // Get all the monthly totals
-      const [fixedExpensesResponse, debtPaymentResponse, savingPlanResponse] = await Promise.all([
+      const [
+        fixedExpensesResponse,
+        debtPaymentResponse,
+        loanIncomeResponse,
+        savingPlanResponse
+      ] = await Promise.all([
         fixedExpenseService.getTotalMonthlyFixedExpenses(userId),
         debtService.getTotalMonthlyDebtPayment(userId),
+        loanService.getTotalMonthlyLoanIncome(userId),
         savingPlanService.getTotalMonthlySavingPlan(userId, salary)
       ]);
 
-      if (fixedExpensesResponse.error || debtPaymentResponse.error || savingPlanResponse.error) {
+      if (fixedExpensesResponse.error || debtPaymentResponse.error || loanIncomeResponse.error || savingPlanResponse.error) {
         return { 
           data: null, 
-          error: fixedExpensesResponse.error || debtPaymentResponse.error || savingPlanResponse.error 
+          error: fixedExpensesResponse.error || debtPaymentResponse.error || loanIncomeResponse.error || savingPlanResponse.error 
         };
       }
 
       const totalFixedExpenses = fixedExpensesResponse.data || 0;
       const totalMonthlyDebtPayment = debtPaymentResponse.data || 0;
+      const totalMonthlyLoanIncome = loanIncomeResponse.data || 0;
       const totalMonthlySavingPlan = savingPlanResponse.data || 0;
 
       // Calculate daily allowance based on payday cycle if available
@@ -97,7 +108,8 @@ export class SavingPlannerService extends SplitSBClient {
         }
       })();
 
-      const dailyAllowance = (salary - totalFixedExpenses - totalMonthlyDebtPayment - totalMonthlySavingPlan) / cycleDays;
+      // Include loan income in allowance calculation
+      const dailyAllowance = (salary + totalMonthlyLoanIncome - totalFixedExpenses - totalMonthlyDebtPayment - totalMonthlySavingPlan) / cycleDays;
 
       // Update user's daily allowance in database
       await this.client
@@ -118,11 +130,11 @@ export class SavingPlannerService extends SplitSBClient {
     try {
       // Get user's salary
       const userResponse = await userService.fetchUserById(userId);
-      if (userResponse.error || !userResponse.data?.salary) {
+      if (userResponse.error || (userResponse.data?.salary === undefined || userResponse.data?.salary === null)) {
         return { data: null, error: userResponse.error || new Error("User salary not found") };
       }
 
-      const salary = userResponse.data.salary;
+      const salary = Number(userResponse.data.salary) || 0;
 
       // Get all the data in parallel
       const [
@@ -180,26 +192,13 @@ export class SavingPlannerService extends SplitSBClient {
           return Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)));
         }
       })();
-      const dailyAllowance = (salary - totalFixedExpenses - totalMonthlyDebtPayment - totalMonthlySavingPlan) / cycleDays;
+      // Include loan income in allowance calculation
+      const dailyAllowance = (salary + totalMonthlyLoanIncome - totalFixedExpenses - totalMonthlyDebtPayment - totalMonthlySavingPlan) / cycleDays;
 
       // Calculate remaining daily budget
-      const daysPassedInCycle = (() => {
-        if (!payday || payday < 1 || payday > 31) {
-          return new Date().getDate();
-        }
-        const todayDay = now.getDate();
-        if (todayDay >= payday) {
-          return todayDay - payday + 1; // include today
-        } else {
-          // days from lastMonth payday to today
-          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          const lastMonthDays = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0).getDate();
-          const lastMonthPaydayDay = Math.min(payday, lastMonthDays);
-          return lastMonthDays - lastMonthPaydayDay + 1 + todayDay;
-        }
-      })();
-      const totalBudgetForDaysPassed = dailyAllowance * daysPassedInCycle;
-      const remainingDailyBudget = Math.max(0, totalBudgetForDaysPassed - currentMonthSpending);
+      // Remaining balance for the whole cycle (salary - plans/expenses - spending so far)
+      const totalSpendingBudgetForCycle = Math.max(0, dailyAllowance * cycleDays);
+      const remainingDailyBudget = Math.max(0, totalSpendingBudgetForCycle - currentMonthSpending);
 
       const summary: SavingPlannerSummary = {
         totalFixedExpenses,
@@ -224,14 +223,20 @@ export class SavingPlannerService extends SplitSBClient {
     try {
       const dailyAllowanceResponse = await this.calculateDailyAllowance(userId);
       
-      if (dailyAllowanceResponse.error) {
-        return { data: null, error: dailyAllowanceResponse.error };
+      if (dailyAllowanceResponse.error || typeof dailyAllowanceResponse.data !== 'number') {
+        return { data: null, error: dailyAllowanceResponse.error || new Error("Failed to calculate daily allowance") };
       }
 
-      return {
-        data: true,
-        error: null,
-      };
+      const { error } = await this.client
+        .from("users")
+        .update({ daily_allowance: Math.max(0, dailyAllowanceResponse.data) })
+        .eq("id", userId);
+
+      if (error) {
+        return { data: null, error };
+      }
+
+      return { data: true, error: null };
     } catch (error: any) {
       return { data: null, error };
     }

@@ -138,7 +138,7 @@ export default function TripDetail() {
           </div>
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow transition">
             <div className="text-sm text-gray-500">Total</div>
-            <div className="font-medium">${tripDetail?.totalMoney}</div>
+            <div className="font-medium">${Utility.formatMoney(tripDetail?.totalMoney ?? 0)}</div>
           </div>
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow transition">
             <div className="text-sm text-gray-500">Total Collected</div>
@@ -155,7 +155,7 @@ export default function TripDetail() {
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow transition">
             <div className="text-sm text-gray-500">Average Expense</div>
             <div className="font-medium">
-              ${tripDetail?.moneyPerUser?.toFixed(2)}
+              ${Utility.formatMoney(tripDetail?.moneyPerUser ?? 0)}
             </div>
           </div>
         </div>
@@ -177,7 +177,7 @@ export default function TripDetail() {
                       {getUserDetailById(payer.userId)?.name}
                     </div>
                     <div className="text-sm text-gray-600">
-                      {payer.spentMoney}$
+                      {Utility.formatMoney(payer.spentMoney)}$
                     </div>
                   </div>
                 </div>
@@ -258,7 +258,7 @@ export default function TripDetail() {
                         </span>
                       </div>
                       <div className="font-semibold">
-                        ${activity.totalMoney}
+                        ${Utility.formatMoney(activity.totalMoney)}
                       </div>
                     </div>
                     <div className="text-sm text-gray-500 mt-1">

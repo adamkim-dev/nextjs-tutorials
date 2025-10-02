@@ -69,12 +69,12 @@ export default function ActivityDetail() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-blue-50 rounded-lg p-4">
               <div className="text-sm text-blue-600 font-medium mb-1">Total Cost</div>
-              <div className="text-2xl font-bold text-blue-900">${activityDetail.totalMoney.toFixed(2)}</div>
+              <div className="text-2xl font-bold text-blue-900">${Utility.formatMoney(activityDetail.totalMoney)}</div>
             </div>
 
             <div className="bg-green-50 rounded-lg p-4">
               <div className="text-sm text-green-600 font-medium mb-1">Cost Per Person</div>
-              <div className="text-2xl font-bold text-green-900">${moneyPerUser.toFixed(2)}</div>
+              <div className="text-2xl font-bold text-green-900">${Utility.formatMoney(moneyPerUser)}</div>
             </div>
 
             <div className="bg-purple-50 rounded-lg p-4">

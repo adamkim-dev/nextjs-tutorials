@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Loan } from "../../models";
+import { Utility } from "../../utils";
 
 type Props = {
   loans: Loan[];
@@ -114,10 +115,10 @@ export default function LoansTab({
             <div>
               <h4 className="font-semibold">{loan.borrower}</h4>
               <p className="text-lg font-bold text-green-600">
-                ${loan.amountRemaining.toFixed(2)} remaining
+                ${Utility.formatMoney(loan.amountRemaining)} remaining
               </p>
               <p className="text-sm text-gray-600">
-                ${loan.monthlyCollect.toFixed(2)}/month
+                ${Utility.formatMoney(loan.monthlyCollect)}/month
               </p>
             </div>
             <div className="flex items-center gap-3">
